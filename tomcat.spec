@@ -53,7 +53,7 @@
 
 Name:          tomcat
 Version:       %{major_version}.%{minor_version}.%{micro_version}
-Release:       1
+Release:       3
 Summary:       Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
 
 Group:         Networking/WWW
