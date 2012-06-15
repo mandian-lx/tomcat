@@ -31,7 +31,7 @@
 %global jspspec 2.2
 %global major_version 7
 %global minor_version 0
-%global micro_version 16
+%global micro_version 27
 %global packdname apache-tomcat-%{version}-src
 %global servletspec 3.0
 %global elspec 2.2
@@ -53,7 +53,7 @@
 
 Name:          tomcat
 Version:       %{major_version}.%{minor_version}.%{micro_version}
-Release:       3
+Release:       1
 Summary:       Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
 
 Group:         Networking/WWW
@@ -266,64 +266,64 @@ zip -u output/build/lib/jsp-api.jar META-INF/MANIFEST.MF
 
 %install
 # build initial path structure
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_bindir}
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_sbindir}
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_javadocdir}/%{name}
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_initrddir}
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_systemddir}
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_sysconfdir}/logrotate.d
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_sysconfdir}/sysconfig
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{appdir}
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{bindir}
-%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{confdir}
-%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{confdir}/Catalina/localhost
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{libdir}
-%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{logdir}
-/bin/touch ${RPM_BUILD_ROOT}%{logdir}/catalina.out
-/bin/echo "%{name}-%{major_version}.%{minor_version}.%{micro_version} RPM installed" >> ${RPM_BUILD_ROOT}%{logdir}/catalina.out
-%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{homedir}
-%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{tempdir}
-%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{workdir}
+%{__install} -d -m 0755 %{buildroot}%{_bindir}
+%{__install} -d -m 0755 %{buildroot}%{_sbindir}
+%{__install} -d -m 0755 %{buildroot}%{_javadocdir}/%{name}
+%{__install} -d -m 0755 %{buildroot}%{_initrddir}
+%{__install} -d -m 0755 %{buildroot}%{_systemddir}
+%{__install} -d -m 0755 %{buildroot}%{_sysconfdir}/logrotate.d
+%{__install} -d -m 0755 %{buildroot}%{_sysconfdir}/sysconfig
+%{__install} -d -m 0755 %{buildroot}%{appdir}
+%{__install} -d -m 0755 %{buildroot}%{bindir}
+%{__install} -d -m 0775 %{buildroot}%{confdir}
+%{__install} -d -m 0775 %{buildroot}%{confdir}/Catalina/localhost
+%{__install} -d -m 0755 %{buildroot}%{libdir}
+%{__install} -d -m 0775 %{buildroot}%{logdir}
+/bin/touch %{buildroot}%{logdir}/catalina.out
+/bin/echo "%{name}-%{major_version}.%{minor_version}.%{micro_version} RPM installed" >> %{buildroot}%{logdir}/catalina.out
+%{__install} -d -m 0775 %{buildroot}%{homedir}
+%{__install} -d -m 0775 %{buildroot}%{tempdir}
+%{__install} -d -m 0775 %{buildroot}%{workdir}
 
 # move things into place
 # First copy supporting libs to tomcat lib
 pushd output/build
-    %{__cp} -a bin/*.{jar,xml} ${RPM_BUILD_ROOT}%{bindir}
-    %{__cp} %{SOURCE10} conf/log4j.properties
-    %{__cp} -a conf/*.{policy,properties,xml} ${RPM_BUILD_ROOT}%{confdir}
-    %{__cp} -a lib/*.jar ${RPM_BUILD_ROOT}%{libdir}
-    %{__cp} -a webapps/* ${RPM_BUILD_ROOT}%{appdir}
+    cp -a bin/*.{jar,xml} %{buildroot}%{bindir}
+    cp %{SOURCE10} conf/log4j.properties
+    cp -a conf/*.{policy,properties,xml} %{buildroot}%{confdir}
+    cp -a lib/*.jar %{buildroot}%{libdir}
+    cp -a webapps/* %{buildroot}%{appdir}
 popd
 # javadoc
-%{__cp} -a output/dist/webapps/docs/api/* ${RPM_BUILD_ROOT}%{_javadocdir}/%{name}
+cp -a output/dist/webapps/docs/api/* %{buildroot}%{_javadocdir}/%{name}
 
 %{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
    -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
    -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE1} \
-    > ${RPM_BUILD_ROOT}%{confdir}/%{name}.conf
+    > %{buildroot}%{confdir}/%{name}.conf
 %{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
    -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
    -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE3} \
-    > ${RPM_BUILD_ROOT}%{_sysconfdir}/sysconfig/%{name}
+    > %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 %{__install} -m 0644 %{SOURCE2} \
-    ${RPM_BUILD_ROOT}%{_initrddir}/%{name}
+    %{buildroot}%{_initrddir}/%{name}
 %{__install} -m 0644 %{SOURCE4} \
-    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}
+    %{buildroot}%{_sbindir}/%{name}
 %{__install} -m 0644 %{SOURCE11} \
-    ${RPM_BUILD_ROOT}%{_systemddir}/%{name}.service
-%{__ln_s} %{name} ${RPM_BUILD_ROOT}%{_sbindir}/d%{name}
+    %{buildroot}%{_systemddir}/%{name}.service
+%{__ln_s} %{name} %{buildroot}%{_sbindir}/d%{name}
 %{__sed} -e "s|\@\@\@TCLOG\@\@\@|%{logdir}|g" %{SOURCE5} \
-    > ${RPM_BUILD_ROOT}%{_sysconfdir}/logrotate.d/%{name}
+    > %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
 %{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
    -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
    -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE6} \
-    > ${RPM_BUILD_ROOT}%{_bindir}/%{name}-digest
+    > %{buildroot}%{_bindir}/%{name}-digest
 %{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
    -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
    -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE7} \
-    > ${RPM_BUILD_ROOT}%{_bindir}/%{name}-tool-wrapper
+    > %{buildroot}%{_bindir}/%{name}-tool-wrapper
 # create jsp and servlet API symlinks
-pushd ${RPM_BUILD_ROOT}%{_javadir}
+pushd %{buildroot}%{_javadir}
    %{__mv} %{name}/jsp-api.jar %{name}-jsp-%{jspspec}-api.jar
    %{__ln_s} %{name}-jsp-%{jspspec}-api.jar %{name}-jsp-api.jar
    %{__mv} %{name}/servlet-api.jar %{name}-servlet-%{servletspec}-api.jar
@@ -341,7 +341,7 @@ pushd output/build
     taglibs-core.jar taglibs-standard.jar 2>&1
 popd
 
-pushd ${RPM_BUILD_ROOT}%{libdir}
+pushd %{buildroot}%{libdir}
     # symlink JSP and servlet API jars
     %{__ln_s} ../%{name}-jsp-%{jspspec}-api.jar .
     %{__ln_s} ../%{name}-servlet-%{servletspec}-api.jar .
@@ -356,7 +356,7 @@ pushd ${RPM_BUILD_ROOT}%{libdir}
 popd
 
 # symlink to the FHS locations where we've installed things
-pushd ${RPM_BUILD_ROOT}%{homedir}
+pushd %{buildroot}%{homedir}
     %{__ln_s} %{appdir} webapps
     %{__ln_s} %{confdir} conf
     %{__ln_s} %{libdir} lib
@@ -366,11 +366,11 @@ pushd ${RPM_BUILD_ROOT}%{homedir}
 popd
 
 # install sample webapp
-%{__mkdir_p} ${RPM_BUILD_ROOT}%{appdir}/sample
-pushd ${RPM_BUILD_ROOT}%{appdir}/sample
-%{jar} xf ${RPM_BUILD_ROOT}%{appdir}/docs/appdev/sample/sample.war
+%{__mkdir_p} %{buildroot}%{appdir}/sample
+pushd %{buildroot}%{appdir}/sample
+%{jar} xf %{buildroot}%{appdir}/docs/appdev/sample/sample.war
 popd
-%{__rm} ${RPM_BUILD_ROOT}%{appdir}/docs/appdev/sample/sample.war
+%{__rm} %{buildroot}%{appdir}/docs/appdev/sample/sample.war
 
 
 # Generate a depmap fragment javax.servlet:servlet-api pointing to
@@ -381,7 +381,7 @@ popd
 mv %{buildroot}%{_mavendepmapfragdir}/%{name} %{buildroot}%{_mavendepmapfragdir}/%{name}-servlet-api
 
 # Install the maven metadata
-%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_mavenpomdir}
+%{__install} -d -m 0755 %{buildroot}%{_mavenpomdir}
 pushd output/dist/src/res/maven
 for pom in *.pom; do
     # fix-up version in all pom files
@@ -389,27 +389,32 @@ for pom in *.pom; do
 done
 
 # we won't install dbcp, juli-adapters and juli-extras pom files
-for pom in tomcat-catalina.pom tomcat-jasper-el.pom tomcat-jasper.pom \
+for pom in tomcat-annotations-api.pom tomcat-catalina.pom tomcat-jasper-el.pom tomcat-jasper.pom \
            tomcat-catalina-ha.pom ; do
-    %{__cp} -a $pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-$pom
+    cp -a $pom %{buildroot}%{_mavenpomdir}/JPP.$pom
     base=`basename $pom .pom`
     %add_to_maven_depmap org.apache.tomcat $base %{version} JPP/%{name} $base
 done
 
 # servlet-api jsp-api and el-api are not in tomcat subdir, since they are widely re-used elsewhere
 for pom in tomcat-jsp-api.pom tomcat-servlet-api.pom tomcat-el-api.pom;do
-    %{__cp} -a $pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-%{name}-$pom
+    cp -a $pom %{buildroot}%{_mavenpomdir}/JPP-%{name}-$pom
     base=`basename $pom .pom`
     %add_to_maven_depmap org.apache.tomcat $base %{version} JPP %{name}-$base
 done
 
 # two special pom where jar files have different names
-%{__cp} -a tomcat-tribes.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
+cp -a tomcat-tribes.pom %{buildroot}%{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
 %add_to_maven_depmap org.apache.tomcat tribes %{version} JPP/%{name} catalina-tribes
 
-%{__cp} -a tomcat-juli.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
+cp -a tomcat-juli.pom %{buildroot}%{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
 %add_to_maven_depmap org.apache.tomcat juli %{version} JPP/%{name} tomcat-juli
 
+cp -a tomcat-util.pom %{buildroot}%{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
+%add_to_maven_depmap org.apache.tomcat util %{version} JPP/%{name} tomcat-util
+
+cp -a tomcat-api.pom %{buildroot}%{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
+%add_to_maven_depmap org.apache.tomcat api %{version} JPP/%{name} tomcat-api
 
 %pre
 # add the tomcat user and group
@@ -494,22 +499,18 @@ fi
 %attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/*.properties
 %attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/context.xml
 %attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/server.xml
-%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/log4j.properties
 %attr(0660,tomcat,tomcat) %config(noreplace) %{confdir}/tomcat-users.xml
 %attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/web.xml
 %dir %{homedir}
+%dir %{bindir}
 %{bindir}/bootstrap.jar
 %{bindir}/catalina-tasks.xml
-%{bindir}/tomcat-juli.jar
-%{libdir}/tomcat-juli.jar
 %{homedir}/lib
 %{homedir}/temp
 %{homedir}/webapps
 %{homedir}/work
 %{homedir}/logs
 %{homedir}/conf
-%{_mavendepmapfragdir}/%{name}
-%{_mavenpomdir}/*.pom
 
 %files admin-webapps
 %defattr(0664,root,tomcat,0755)
@@ -533,7 +534,17 @@ fi
 %files lib
 %defattr(-,root,root,-)
 %{libdir}
-%exclude %{libdir}/tomcat-juli.jar
+%{bindir}/tomcat-juli.jar
+%{_mavendepmapfragdir}/%{name}
+%{_mavenpomdir}/JPP.%{name}-annotations-api.pom
+%{_mavenpomdir}/JPP.%{name}-catalina-ha.pom
+%{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
+%{_mavenpomdir}/JPP.%{name}-catalina.pom
+%{_mavenpomdir}/JPP.%{name}-jasper-el.pom
+%{_mavenpomdir}/JPP.%{name}-jasper.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
 %exclude %{libdir}/%{name}-el-%{elspec}-api.jar
 
 %files servlet-%{servletspec}-api
