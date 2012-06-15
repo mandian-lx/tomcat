@@ -97,6 +97,7 @@ BuildRequires: log4j
 BuildRequires: geronimo-jaxrpc
 BuildRequires: wsdl4j
 BuildRequires: java-rpmbuild
+BuildRequires: zip
 Requires:      apache-commons-daemon
 Requires:      apache-commons-logging
 Requires:      apache-commons-collections
