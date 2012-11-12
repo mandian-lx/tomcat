@@ -1,0 +1,18 @@
+sources:
+  "apache-tomcat-7.0.29-src.tar.gz:"	645708bcfba06d4c6db1981c493d3d260b5d57ac
+  "el-api-OSGi-MANIFEST.MF:"	f7d44309d0d695725ddd24eaf959281c73f2138a
+  "jasper-el-OSGi-MANIFEST.MF:"	e9c24e49141d88a82a0ca68dd982824aa3756465
+  "jasper-OSGi-MANIFEST.MF:"	d17bdbf1f6f732f0551d6139344f662482fd21ff
+  "jsp-api-OSGi-MANIFEST.MF:"	b88ab9f5337cedb29bc2a909406976022d5cfee4
+  "servlet-api-OSGi-MANIFEST.MF:"	1db5f3169b6d03cc4b2d85ded1e73676907ae7e6
+  "tomcat-7.0.conf:"	b40e4e132d7b329a38ddd8fee4ff92d37c27735e
+  "tomcat-7.0-digest.script:"	f805dadbe12f6c0e98bd8eac6e59b63d66946a6e
+  "tomcat-7.0.init:"	0431c5220d1a55b158e5e62af0280069aad1c751
+  "tomcat-7.0-log4j.properties:"	3bab04cc39cb885bb8780f062412f6a746580578
+  "tomcat-7.0.logrotate:"	0d9555935cfcf4861f0220f8b2394729af612869
+  "tomcat-7.0.service:"	577e2663bb855bfda397ac6766e9c9cbdec6a105
+  "tomcat-7.0.sysconfig:"	4eb78b244f255cd3ab34cf71a5ee73da3275704c
+  "tomcat-7.0-tool-wrapper.script:"	b3e0c8f6c8e1eaac24ca555057650ed0c8bb396d
+  "tomcat-7.0.wrapper:"	f0fbfc9ba1811b15928d70eda9ffafd5f18afa20
+  "tomcat-api-OSGi-MANIFEST.MF:"	3d235248210e29533b987b24cb521e01b2d76522
+  "tomcat-juli-OSGi-MANIFEST.MF:"	4aa1314db079c34c7548b43488867b79ee831e3d
