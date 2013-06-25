@@ -51,66 +51,64 @@
 %global _initrddir %{_sysconfdir}/init.d
 %global _systemddir /lib/systemd/system
 
-Name:          tomcat
-Version:       %{major_version}.%{minor_version}.%{micro_version}
-Release:       1
-Summary:       Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
+Summary:	Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
+Name:		tomcat
+Version:	%{major_version}.%{minor_version}.%{micro_version}
+Release:	1
+Group:		Networking/WWW
+License:	ASL 2.0
+Url:		http://tomcat.apache.org/
+Source0:	http://www.apache.org/dist/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
+Source1:	%{name}-%{major_version}.%{minor_version}.conf
+Source2:	%{name}-%{major_version}.%{minor_version}.init
+Source3:	%{name}-%{major_version}.%{minor_version}.sysconfig
+Source4:	%{name}-%{major_version}.%{minor_version}.wrapper
+Source5:	%{name}-%{major_version}.%{minor_version}.logrotate
+Source6:	%{name}-%{major_version}.%{minor_version}-digest.script
+Source7:	%{name}-%{major_version}.%{minor_version}-tool-wrapper.script
+Source8:	servlet-api-OSGi-MANIFEST.MF
+Source9:	jsp-api-OSGi-MANIFEST.MF
+Source10:	%{name}-%{major_version}.%{minor_version}-log4j.properties
+Source11:	%{name}-%{major_version}.%{minor_version}.service
+Source12:	el-api-OSGi-MANIFEST.MF
+Source13:	jasper-el-OSGi-MANIFEST.MF
+Source14:	jasper-OSGi-MANIFEST.MF
+Source15:	tomcat-api-OSGi-MANIFEST.MF
+Source16:	tomcat-juli-OSGi-MANIFEST.MF
+Patch0:		%{name}-%{major_version}.%{minor_version}-bootstrap-MANIFEST.MF.patch
+Patch1:		%{name}-%{major_version}.%{minor_version}-tomcat-users-webapp.patch
+BuildArch:	noarch
 
-Group:         Networking/WWW
-License:       ASL 2.0
-URL:           http://tomcat.apache.org/
-Source0:       http://www.apache.org/dist/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
-Source1:       %{name}-%{major_version}.%{minor_version}.conf
-Source2:       %{name}-%{major_version}.%{minor_version}.init
-Source3:       %{name}-%{major_version}.%{minor_version}.sysconfig
-Source4:       %{name}-%{major_version}.%{minor_version}.wrapper
-Source5:       %{name}-%{major_version}.%{minor_version}.logrotate
-Source6:       %{name}-%{major_version}.%{minor_version}-digest.script
-Source7:       %{name}-%{major_version}.%{minor_version}-tool-wrapper.script
-Source8:       servlet-api-OSGi-MANIFEST.MF
-Source9:       jsp-api-OSGi-MANIFEST.MF
-Source10:      %{name}-%{major_version}.%{minor_version}-log4j.properties
-Source11:      %{name}-%{major_version}.%{minor_version}.service
-Source12:      el-api-OSGi-MANIFEST.MF
-Source13:      jasper-el-OSGi-MANIFEST.MF
-Source14:      jasper-OSGi-MANIFEST.MF
-Source15:      tomcat-api-OSGi-MANIFEST.MF
-Source16:      tomcat-juli-OSGi-MANIFEST.MF
-Patch0:        %{name}-%{major_version}.%{minor_version}-bootstrap-MANIFEST.MF.patch
-Patch1:        %{name}-%{major_version}.%{minor_version}-tomcat-users-webapp.patch
-
-BuildArch:     noarch
-
-BuildRequires: ant
-BuildRequires: ant-nodeps
-BuildRequires: ecj
-BuildRequires: findutils
-BuildRequires: apache-commons-collections
-BuildRequires: apache-commons-daemon
-BuildRequires: apache-commons-dbcp
-BuildRequires: apache-commons-pool
-BuildRequires: jakarta-taglibs-standard
-BuildRequires: java-devel >= 0:1.6.0
-BuildRequires: jpackage-utils >= 0:1.7.0
-BuildRequires: junit
-BuildRequires: log4j
-BuildRequires: geronimo-jaxrpc
-BuildRequires: wsdl4j
-BuildRequires: java-rpmbuild
-BuildRequires: zip
-Requires:      apache-commons-daemon
-Requires:      apache-commons-logging
-Requires:      apache-commons-collections
-Requires:      apache-commons-dbcp
-Requires:      apache-commons-pool
-Requires:      java >= 0:1.6.0
-Requires:      procps
-Requires:      %{name}-lib = %{version}-%{release}
-Requires(pre):    shadow-utils
-Requires(post):   chkconfig
-Requires(preun):  chkconfig
-Requires(post):   jpackage-utils
-Requires(postun): jpackage-utils
+BuildRequires:	ant
+BuildRequires:	ant-nodeps
+BuildRequires:	ecj
+BuildRequires:	findutils
+BuildRequires:	apache-commons-collections
+BuildRequires:	apache-commons-daemon
+BuildRequires:	apache-commons-dbcp
+BuildRequires:	apache-commons-pool
+BuildRequires:	jakarta-taglibs-standard
+BuildRequires:	java-devel >= 0:1.6.0
+BuildRequires:	jpackage-utils >= 0:1.7.0
+BuildRequires:	junit
+BuildRequires:	log4j
+BuildRequires:	geronimo-jaxrpc
+BuildRequires:	wsdl4j
+BuildRequires:	java-rpmbuild
+BuildRequires:	zip
+Requires:	apache-commons-daemon
+Requires:	apache-commons-logging
+Requires:	apache-commons-collections
+Requires:	apache-commons-dbcp
+Requires:	apache-commons-pool
+Requires:	java >= 0:1.6.0
+Requires:	procps
+Requires:	%{name}-lib = %{version}-%{release}
+Requires(pre):	shadow-utils
+Requires(post):	chkconfig
+Requires(preun):	chkconfig
+Requires(post):	jpackage-utils
+Requires(postun):	jpackage-utils
 
 %description
 Tomcat is the servlet container that is used in the official Reference
@@ -123,85 +121,85 @@ released under the Apache Software License version 2.0. Tomcat is intended
 to be a collaboration of the best-of-breed developers from around the world.
 
 %package admin-webapps
-Group: Networking/WWW
-Summary: The host-manager and manager web applications for Apache Tomcat
-Requires: %{name} = %{version}-%{release}
+Group:		Networking/WWW
+Summary:	The host-manager and manager web applications for Apache Tomcat
+Requires:	%{name} = %{version}-%{release}
 
 %description admin-webapps
 The host-manager and manager web applications for Apache Tomcat.
 
 %package docs-webapp
-Group: Networking/WWW
-Summary: The docs web application for Apache Tomcat
-Requires: %{name} = %{version}-%{release}
+Group:		Networking/WWW
+Summary:	The docs web application for Apache Tomcat
+Requires:	%{name} = %{version}-%{release}
 
 %description docs-webapp
 The docs web application for Apache Tomcat.
 
 %package javadoc
-Group: Development/Java
-Summary: Javadoc generated documentation for Apache Tomcat
-Requires: jpackage-utils
+Group:		Development/Java
+Summary:	Javadoc generated documentation for Apache Tomcat
+Requires:	jpackage-utils
 
 %description javadoc
 Javadoc generated documentation for Apache Tomcat.
 
 %package jsp-%{jspspec}-api
-Group: Development/Java
-Summary: Apache Tomcat JSP API implementation classes
-Provides: jsp = %{jspspec}
-Provides: jsp22
-Requires: %{name}-servlet-%{servletspec}-api = %{version}-%{release}
-Requires(post): chkconfig
-Requires(postun): chkconfig
+Group:		Development/Java
+Summary:	Apache Tomcat JSP API implementation classes
+Provides:	jsp = %{jspspec}
+Provides:	jsp22
+Requires:	%{name}-servlet-%{servletspec}-api = %{version}-%{release}
+Requires(post):	chkconfig
+Requires(postun):	chkconfig
 
 %description jsp-%{jspspec}-api
 Apache Tomcat JSP API implementation classes.
 
 
 %package lib
-Group: Development/Java
-Summary: Libraries needed to run the Tomcat Web container
-Requires: %{name}-jsp-%{jspspec}-api = %{version}-%{release}
-Requires: %{name}-servlet-%{servletspec}-api = %{version}-%{release}
-Requires: %{name}-el-%{elspec}-api = %{version}-%{release}
-Requires: ecj
-Requires: apache-commons-collections
-Requires: apache-commons-dbcp
-Requires: apache-commons-pool
-Requires(preun): coreutils
+Group:		Development/Java
+Summary:	Libraries needed to run the Tomcat Web container
+Requires:	%{name}-jsp-%{jspspec}-api = %{version}-%{release}
+Requires:	%{name}-servlet-%{servletspec}-api = %{version}-%{release}
+Requires:	%{name}-el-%{elspec}-api = %{version}-%{release}
+Requires:	ecj
+Requires:	apache-commons-collections
+Requires:	apache-commons-dbcp
+Requires:	apache-commons-pool
+Requires(preun):	coreutils
 
 %description lib
 Libraries needed to run the Tomcat Web container.
 
 %package servlet-%{servletspec}-api
-Group: Development/Java
-Summary: Apache Tomcat Servlet API implementation classes
-Provides: servlet = %{servletspec}
-Provides: servlet6
-Provides: servlet3
-Requires(post): chkconfig
-Requires(postun): chkconfig
+Group:		Development/Java
+Summary:	Apache Tomcat Servlet API implementation classes
+Provides:	servlet = %{servletspec}
+Provides:	servlet6
+Provides:	servlet3
+Requires(post):	chkconfig
+Requires(postun):	chkconfig
 
 %description servlet-%{servletspec}-api
 Apache Tomcat Servlet API implementation classes.
 
 %package el-%{elspec}-api
-Group: Development/Java
-Summary: Expression Language v1.0 API
-Provides: el_1_0_api = %{version}-%{release}
-Provides: el_api = %{elspec}
-Requires(post): chkconfig
-Requires(postun): chkconfig
+Group:		Development/Java
+Summary:	Expression Language v1.0 API
+Provides:	el_1_0_api = %{version}-%{release}
+Provides:	el_api = %{elspec}
+Requires(post):	chkconfig
+Requires(postun):	chkconfig
 
 %description el-%{elspec}-api
 Expression Language 1.0.
 
 %package webapps
-Group: Networking/WWW
-Summary: The ROOT and examples web applications for Apache Tomcat
-Requires: %{name} = %{version}-%{release}
-Requires: jakarta-taglibs-standard >= 0:1.1
+Group:		Networking/WWW
+Summary:	The ROOT and examples web applications for Apache Tomcat
+Requires:	%{name} = %{version}-%{release}
+Requires:	jakarta-taglibs-standard >= 0:1.1
 
 %description webapps
 The ROOT and examples web applications for Apache Tomcat.
@@ -538,21 +536,17 @@ fi
 %{appdir}/manager
 
 %files docs-webapp
-%defattr(-,root,root,-)
 %{appdir}/docs
 
 %files javadoc
-%defattr(-,root,root,-)
 %{_javadocdir}/%{name}
 
 %files jsp-%{jspspec}-api
-%defattr(-,root,root,-)
 %{_javadir}/%{name}-jsp-%{jspspec}*.jar
 %{_javadir}/%{name}-jsp-api.jar
 %{_mavenpomdir}/JPP-%{name}-tomcat-jsp-api.pom
 
 %files lib
-%defattr(-,root,root,-)
 %{libdir}
 %{bindir}/tomcat-juli.jar
 %{_mavendepmapfragdir}/%{name}
@@ -568,7 +562,6 @@ fi
 %exclude %{libdir}/%{name}-el-%{elspec}-api.jar
 
 %files servlet-%{servletspec}-api
-%defattr(-,root,root,-)
 %doc LICENSE
 %{_javadir}/%{name}-servlet-%{servletspec}*.jar
 %{_javadir}/%{name}-servlet-api.jar
@@ -576,7 +569,6 @@ fi
 %{_mavenpomdir}/JPP-%{name}-tomcat-servlet-api.pom
 
 %files el-%{elspec}-api
-%defattr(-,root,root,-)
 %doc LICENSE
 %{_javadir}/%{name}-el-%{elspec}-api.jar
 %{_javadir}/%{name}-el-api.jar
