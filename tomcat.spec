@@ -92,7 +92,7 @@ BuildRequires:	java-devel >= 0:1.6.0
 BuildRequires:	jpackage-utils >= 0:1.7.0
 BuildRequires:	junit
 BuildRequires:	log4j
-BuildRequires:	geronimo-jaxrpc
+BuildRequires:	jaxrpc
 BuildRequires:	wsdl4j
 BuildRequires:	java-rpmbuild
 BuildRequires:	zip
