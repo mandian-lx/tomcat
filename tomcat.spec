@@ -31,7 +31,7 @@
 %global jspspec 2.2
 %global major_version 7
 %global minor_version 0
-%global micro_version 29
+%global micro_version 42
 %global packdname apache-tomcat-%{version}-src
 %global servletspec 3.0
 %global elspec 2.2
@@ -60,7 +60,7 @@ License:	ASL 2.0
 Url:		http://tomcat.apache.org/
 Source0:	http://www.apache.org/dist/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
 Source1:	%{name}-%{major_version}.%{minor_version}.conf
-Source2:	%{name}-%{major_version}.%{minor_version}.init
+Source2:	%{name}-%{major_version}.%{minor_version}.sysconfig
 Source3:	%{name}-%{major_version}.%{minor_version}.sysconfig
 Source4:	%{name}-%{major_version}.%{minor_version}.wrapper
 Source5:	%{name}-%{major_version}.%{minor_version}.logrotate
