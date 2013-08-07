@@ -54,7 +54,7 @@
 Summary:	Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
 Name:		tomcat
 Version:	%{major_version}.%{minor_version}.%{micro_version}
-Release:	1
+Release:	2
 Group:		Networking/WWW
 License:	ASL 2.0
 Url:		http://tomcat.apache.org/
@@ -478,8 +478,6 @@ cp -a tomcat-api.pom %{buildroot}%{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
     -s /bin/nologin -r -d %{homedir} tomcat 2>/dev/null || :
 
 %post
-# install but don't activate
-/sbin/chkconfig --add %{name}
 %update_maven_depmap
 
 %post jsp-%{jspspec}-api
@@ -500,7 +498,7 @@ cp -a tomcat-api.pom %{buildroot}%{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
 %{__rm} -rf %{workdir}/* %{tempdir}/*
 if [ "$1" = "0" ]; then
     %{_initrddir}/%{name} stop >/dev/null 2>&1
-    /sbin/chkconfig --del %{name}
+    /sbin/chkconfig --del %{name} > /dev/null 2>&1
 fi
 
 
