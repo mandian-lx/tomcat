@@ -75,6 +75,13 @@ Source13:	jasper-el-OSGi-MANIFEST.MF
 Source14:	jasper-OSGi-MANIFEST.MF
 Source15:	tomcat-api-OSGi-MANIFEST.MF
 Source16:	tomcat-juli-OSGi-MANIFEST.MF
+Source18:      %{name}-%{major_version}.%{minor_version}-tomcat-jsvc-sysd
+Source19:      %{name}-%{major_version}.%{minor_version}-jsvc.wrapper
+Source20:      %{name}-%{major_version}.%{minor_version}-jsvc.service
+Source30:      tomcat-preamble
+Source31:      tomcat-server
+Source32:      tomcat-named.service
+
 Patch0:		%{name}-%{major_version}.%{minor_version}-bootstrap-MANIFEST.MF.patch
 Patch1:		%{name}-%{major_version}.%{minor_version}-tomcat-users-webapp.patch
 BuildArch:	noarch
@@ -96,6 +103,7 @@ BuildRequires:	jaxrpc
 BuildRequires:	wsdl4j
 BuildRequires:	java-rpmbuild
 BuildRequires:	zip
+BuildRequires: systemd-units
 Requires:	commons-daemon
 Requires:	commons-logging
 Requires:	commons-collections
@@ -109,6 +117,10 @@ Requires(post):	chkconfig
 Requires(preun):	chkconfig
 Requires(post):	jpackage-utils
 Requires(postun):	jpackage-utils
+Requires(post):   systemd
+Requires(post):   systemd-units
+Requires(preun):  systemd-units
+Requires(postun): systemd-units
 
 %description
 Tomcat is the servlet container that is used in the official Reference
@@ -164,7 +176,7 @@ Requires:	%{name}-jsp-%{jspspec}-api = %{version}-%{release}
 Requires:	%{name}-servlet-%{servletspec}-api = %{version}-%{release}
 Requires:	%{name}-el-%{elspec}-api = %{version}-%{release}
 Requires:	ecj
-Requires:	apache-commons-collections
+Requires:	commons-collections
 Requires:	apache-commons-dbcp
 Requires:	apache-commons-pool
 Requires(preun):	coreutils
@@ -226,7 +238,7 @@ export OPT_JAR_LIST="xalan-j2-serializer"
    # who needs a build.properties file anyway
    %{ant} -Dbase.path="." \
       -Dbuild.compiler="modern" \
-      -Dcommons-collections.jar="$(build-classpath apache-commons-collections)" \
+      -Dcommons-collections.jar="$(build-classpath commons-collections)" \
       -Dcommons-daemon.jar="$(build-classpath apache-commons-daemon)" \
       -Dcommons-daemon.native.src.tgz="HACK" \
       -Djasper-jdt.jar="$(build-classpath ecj)" \
@@ -329,6 +341,12 @@ cp -a output/dist/webapps/docs/api/* %{buildroot}%{_javadocdir}/%{name}
     %{buildroot}%{_sbindir}/%{name}
 %{__install} -m 0644 %{SOURCE11} \
     %{buildroot}%{_systemddir}/%{name}.service
+%{__install} -m 0644 %{SOURCE19} \
+    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}-jsvc
+%{__install} -m 0644 %{SOURCE20} \
+    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}-jsvc.service
+%{__install} -m 0644 %{SOURCE18} \
+    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}-jsvc-sysd
 %{__ln_s} %{name} %{buildroot}%{_sbindir}/d%{name}
 %{__sed} -e "s|\@\@\@TCLOG\@\@\@|%{logdir}|g" %{SOURCE5} \
     > %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
@@ -340,6 +358,15 @@ cp -a output/dist/webapps/docs/api/* %{buildroot}%{_javadocdir}/%{name}
    -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
    -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE7} \
     > %{buildroot}%{_bindir}/%{name}-tool-wrapper
+
+%{__install} -m 0755 %{SOURCE30} \
+    ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}/preamble
+%{__install} -m 0755 %{SOURCE31} \
+    ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}/server
+%{__install} -m 0644 %{SOURCE32} \
+    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}@.service
+
+
 # create jsp and servlet API symlinks
 pushd %{buildroot}%{_javadir}
    %{__mv} %{name}/jsp-api.jar %{name}-jsp-%{jspspec}-api.jar
@@ -351,7 +378,7 @@ pushd %{buildroot}%{_javadir}
 popd
 
 pushd output/build
-    %{_bindir}/build-jar-repository lib apache-commons-collections \
+    %{_bindir}/build-jar-repository lib commons-collections \
                                         apache-commons-dbcp apache-commons-pool ecj 2>&1
     # need to use -p here with b-j-r otherwise the examples webapp fails to
     # load with a java.io.IOException
@@ -364,7 +391,7 @@ pushd %{buildroot}%{libdir}
     %{__ln_s} ../%{name}-jsp-%{jspspec}-api.jar .
     %{__ln_s} ../%{name}-servlet-%{servletspec}-api.jar .
     %{__ln_s} ../%{name}-el-%{elspec}-api.jar .
-    %{__ln_s} $(build-classpath apache-commons-collections) commons-collections.jar
+    %{__ln_s} $(build-classpath commons-collections) commons-collections.jar
     %{__ln_s} $(build-classpath apache-commons-dbcp) commons-dbcp.jar
     %{__ln_s} $(build-classpath log4j) log4j.jar
     %{__ln_s} $(build-classpath ecj) jasper-jdt.jar

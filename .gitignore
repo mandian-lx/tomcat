@@ -1,17 +1,1 @@
 apache-tomcat-7.0.29-src.tar.gz
-el-api-OSGi-MANIFEST.MF
-jasper-el-OSGi-MANIFEST.MF
-jasper-OSGi-MANIFEST.MF
-jsp-api-OSGi-MANIFEST.MF
-servlet-api-OSGi-MANIFEST.MF
-tomcat-7.0.conf
-tomcat-7.0-digest.script
-tomcat-7.0.init
-tomcat-7.0-log4j.properties
-tomcat-7.0.logrotate
-tomcat-7.0.service
-tomcat-7.0.sysconfig
-tomcat-7.0-tool-wrapper.script
-tomcat-7.0.wrapper
-tomcat-api-OSGi-MANIFEST.MF
-tomcat-juli-OSGi-MANIFEST.MF
