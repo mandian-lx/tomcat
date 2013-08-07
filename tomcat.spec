@@ -83,8 +83,8 @@ BuildRequires:	ant
 BuildRequires:	ant-nodeps
 BuildRequires:	ecj
 BuildRequires:	findutils
-BuildRequires:	apache-commons-collections
-BuildRequires:	apache-commons-daemon
+BuildRequires:	commons-collections
+BuildRequires:	commons-daemon
 BuildRequires:	apache-commons-dbcp
 BuildRequires:	apache-commons-pool
 BuildRequires:	jakarta-taglibs-standard
@@ -96,9 +96,9 @@ BuildRequires:	geronimo-jaxrpc
 BuildRequires:	wsdl4j
 BuildRequires:	java-rpmbuild
 BuildRequires:	zip
-Requires:	apache-commons-daemon
-Requires:	apache-commons-logging
-Requires:	apache-commons-collections
+Requires:	commons-daemon
+Requires:	commons-logging
+Requires:	commons-collections
 Requires:	apache-commons-dbcp
 Requires:	apache-commons-pool
 Requires:	java >= 0:1.6.0
