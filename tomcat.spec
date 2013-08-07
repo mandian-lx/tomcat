@@ -60,7 +60,6 @@ License:	ASL 2.0
 Url:		http://tomcat.apache.org/
 Source0:	http://www.apache.org/dist/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
 Source1:	%{name}-%{major_version}.%{minor_version}.conf
-Source2:	%{name}-%{major_version}.%{minor_version}.sysconfig
 Source3:	%{name}-%{major_version}.%{minor_version}.sysconfig
 Source4:	%{name}-%{major_version}.%{minor_version}.wrapper
 Source5:	%{name}-%{major_version}.%{minor_version}.logrotate
@@ -156,6 +155,17 @@ Requires:	jpackage-utils
 %description javadoc
 Javadoc generated documentation for Apache Tomcat.
 
+%package jsvc
+Group: Development/Java
+Summary: Apache jsvc wrapper for Apache Tomcat as separate service
+Requires: %{name} = %{version}-%{release}
+Requires: commons-daemon-jsvc
+
+%description jsvc
+Systemd service and wrapper scripts to start tomcat with jsvc,
+which allows tomcat to perform some privileged operations
+(e.g. bind to a port < 1024) and then switch identity to a non-privileged user.
+
 %package jsp-%{jspspec}-api
 Group:		Development/Java
 Summary:	Apache Tomcat JSP API implementation classes
@@ -239,7 +249,7 @@ export OPT_JAR_LIST="xalan-j2-serializer"
    %{ant} -Dbase.path="." \
       -Dbuild.compiler="modern" \
       -Dcommons-collections.jar="$(build-classpath commons-collections)" \
-      -Dcommons-daemon.jar="$(build-classpath apache-commons-daemon)" \
+      -Dcommons-daemon.jar="$(build-classpath commons-daemon)" \
       -Dcommons-daemon.native.src.tgz="HACK" \
       -Djasper-jdt.jar="$(build-classpath ecj)" \
       -Djdt.jar="$(build-classpath ecj)" \
@@ -314,6 +324,8 @@ zip -u output/build/bin/tomcat-juli.jar META-INF/MANIFEST.MF
 %{__install} -d -m 0775 %{buildroot}%{homedir}
 %{__install} -d -m 0775 %{buildroot}%{tempdir}
 %{__install} -d -m 0775 %{buildroot}%{workdir}
+%{__install} -d -m 0755 %{buildroot}%{_unitdir}
+%{__install} -d -m 0755 %{buildroot}%{_libexecdir}/%{name}
 
 # move things into place
 # First copy supporting libs to tomcat lib
@@ -335,18 +347,16 @@ cp -a output/dist/webapps/docs/api/* %{buildroot}%{_javadocdir}/%{name}
    -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
    -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE3} \
     > %{buildroot}%{_sysconfdir}/sysconfig/%{name}
-%{__install} -m 0644 %{SOURCE2} \
-    %{buildroot}%{_initrddir}/%{name}
 %{__install} -m 0644 %{SOURCE4} \
     %{buildroot}%{_sbindir}/%{name}
 %{__install} -m 0644 %{SOURCE11} \
     %{buildroot}%{_systemddir}/%{name}.service
 %{__install} -m 0644 %{SOURCE19} \
-    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}-jsvc
+    %{buildroot}%{_sbindir}/%{name}-jsvc
 %{__install} -m 0644 %{SOURCE20} \
-    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}-jsvc.service
+    %{buildroot}%{_unitdir}/%{name}-jsvc.service
 %{__install} -m 0644 %{SOURCE18} \
-    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}-jsvc-sysd
+    %{buildroot}%{_sbindir}/%{name}-jsvc-sysd
 %{__ln_s} %{name} %{buildroot}%{_sbindir}/d%{name}
 %{__sed} -e "s|\@\@\@TCLOG\@\@\@|%{logdir}|g" %{SOURCE5} \
     > %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
@@ -360,11 +370,11 @@ cp -a output/dist/webapps/docs/api/* %{buildroot}%{_javadocdir}/%{name}
     > %{buildroot}%{_bindir}/%{name}-tool-wrapper
 
 %{__install} -m 0755 %{SOURCE30} \
-    ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}/preamble
+    %{buildroot}%{_libexecdir}/%{name}/preamble
 %{__install} -m 0755 %{SOURCE31} \
-    ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}/server
+    %{buildroot}%{_libexecdir}/%{name}/server
 %{__install} -m 0644 %{SOURCE32} \
-    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}@.service
+    %{buildroot}%{_unitdir}/%{name}@.service
 
 
 # create jsp and servlet API symlinks
@@ -523,8 +533,11 @@ fi
 %attr(0755,root,root) %{_bindir}/%{name}-tool-wrapper
 %attr(0755,root,root) %{_sbindir}/d%{name}
 %attr(0755,root,root) %{_sbindir}/%{name}
-%attr(0755,root,root) %{_initrddir}/%{name}
 %attr(0644,root,root) %{_systemddir}/%{name}.service
+%attr(0644,root,root) %{_unitdir}/%{name}@.service
+%attr(0755,root,root) %dir %{_libexecdir}/%{name}
+%attr(0755,root,root) %{_libexecdir}/%{name}/preamble
+%attr(0755,root,root) %{_libexecdir}/%{name}/server
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %attr(0765,root,tomcat) %dir %{basedir}
@@ -607,4 +620,10 @@ fi
 %{appdir}/ROOT
 %{appdir}/examples
 %{appdir}/sample
+
+%files jsvc
+%defattr(755,root,root,0755)
+%{_sbindir}/%{name}-jsvc
+%{_sbindir}/%{name}-jsvc-sysd
+%attr(0644,root,root) %{_unitdir}/%{name}-jsvc.service
 
