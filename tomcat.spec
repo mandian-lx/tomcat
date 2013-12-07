@@ -54,7 +54,7 @@
 Summary:	Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
 Name:		tomcat
 Version:	%{major_version}.%{minor_version}.%{micro_version}
-Release:	2
+Release:	3
 Group:		Networking/WWW
 License:	ASL 2.0
 Url:		http://tomcat.apache.org/
