@@ -1,2378 +1,863 @@
+%{?_javapackages_macros:%_javapackages_macros}
+%undefine __cp
+%define __cp /bin/cp
+# Copyright (c) 2000-2008, JPackage Project
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the
+#    distribution.
+# 3. Neither the name of the JPackage Project nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
-%undefine _compress
-%undefine _extension
-%global _duplicate_files_terminate_build 0
-%global _files_listed_twice_terminate_build 0
-%global _unpackaged_files_terminate_build 0
-%global _nonzero_exit_pkgcheck_terminate_build 0
-%global _use_internal_dependency_generator 0
-%global __find_requires /bin/sed -e 's/.*//'
-%global __find_provides /bin/sed -e 's/.*//'
+%global jspspec 2.2
+%global major_version 7
+%global minor_version 0
+%global micro_version 47
+%global packdname apache-tomcat-%{version}-src
+%global servletspec 3.0
+%global elspec 2.2
+%global tcuid 91
 
-Name:		tomcat
-Version:	7.0.47
-Release:	1.1
-License:	GPLv3+
-Source0:	tomcat-7.0.47-1.1-omv2014.0.noarch.rpm
-Source1:	tomcat-admin-webapps-7.0.47-1.1-omv2014.0.noarch.rpm
-Source2:	tomcat-docs-webapp-7.0.47-1.1-omv2014.0.noarch.rpm
-Source3:	tomcat-el-2.2-api-7.0.47-1.1-omv2014.0.noarch.rpm
-Source4:	tomcat-javadoc-7.0.47-1.1-omv2014.0.noarch.rpm
-Source5:	tomcat-jsp-2.2-api-7.0.47-1.1-omv2014.0.noarch.rpm
-Source6:	tomcat-jsvc-7.0.47-1.1-omv2014.0.noarch.rpm
-Source7:	tomcat-lib-7.0.47-1.1-omv2014.0.noarch.rpm
-Source8:	tomcat-servlet-3.0-api-7.0.47-1.1-omv2014.0.noarch.rpm
+# FHS 2.3 compliant tree structure - http://www.pathname.com/fhs/2.3/
+%global basedir %{_var}/lib/%{name}
+%global appdir %{basedir}/webapps
+%global homedir %{_datadir}/%{name}
+%global bindir %{homedir}/bin
+%global confdir %{_sysconfdir}/%{name}
+%global libdir %{_javadir}/%{name}
+%global logdir %{_var}/log/%{name}
+%global cachedir %{_var}/cache/%{name}
+%global tempdir %{cachedir}/temp
+%global workdir %{cachedir}/work
+%global _initrddir %{_sysconfdir}/init.d
+%global _systemddir /lib/systemd/system
 
-URL:		https://abf.rosalinux.ru/openmandriva/tomcat
-BuildArch:	noarch
-Summary:	tomcat bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	apache-commons-collections
-Requires:	apache-commons-daemon
-Requires:	apache-commons-dbcp
-Requires:	apache-commons-logging
-Requires:	apache-commons-pool
-Requires:	chkconfig
-Requires:	java >= 1:1.6.0
-Requires:	jpackage-utils
-Requires:	procps
-Requires:	shadow-utils
-Requires:	systemd-units
-Requires:	tomcat-lib = 0:7.0.47-1.1
-Provides:	tomcat = 0:7.0.47-1.1:2014.0
+Name:          tomcat
+Epoch:         0
+Version:       %{major_version}.%{minor_version}.%{micro_version}
+Release:       1.2%{?dist}
+Summary:       Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
+
+
+License:       ASL 2.0
+URL:           http://tomcat.apache.org/
+Source0:       http://www.apache.org/dist/tomcat/tomcat-%{major_version}/v%{version}/src/%{packdname}.tar.gz
+Source1:       %{name}-%{major_version}.%{minor_version}.conf
+Source3:       %{name}-%{major_version}.%{minor_version}.sysconfig
+Source4:       %{name}-%{major_version}.%{minor_version}.wrapper
+Source5:       %{name}-%{major_version}.%{minor_version}.logrotate
+Source6:       %{name}-%{major_version}.%{minor_version}-digest.script
+Source7:       %{name}-%{major_version}.%{minor_version}-tool-wrapper.script
+Source8:       servlet-api-OSGi-MANIFEST.MF
+Source9:       jsp-api-OSGi-MANIFEST.MF
+Source10:      %{name}-%{major_version}.%{minor_version}-log4j.properties
+Source11:      %{name}-%{major_version}.%{minor_version}.service
+Source12:      el-api-OSGi-MANIFEST.MF
+Source13:      jasper-el-OSGi-MANIFEST.MF
+Source14:      jasper-OSGi-MANIFEST.MF
+Source15:      tomcat-api-OSGi-MANIFEST.MF
+Source16:      tomcat-juli-OSGi-MANIFEST.MF
+Source18:      %{name}-%{major_version}.%{minor_version}-tomcat-jsvc-sysd
+Source19:      %{name}-%{major_version}.%{minor_version}-jsvc.wrapper
+Source20:      %{name}-%{major_version}.%{minor_version}-jsvc.service
+Source30:      tomcat-preamble
+Source31:      tomcat-server
+Source32:      tomcat-named.service
+
+Patch0:        %{name}-%{major_version}.%{minor_version}-bootstrap-MANIFEST.MF.patch
+Patch1:        %{name}-%{major_version}.%{minor_version}-tomcat-users-webapp.patch
+
+BuildArch:     noarch
+
+BuildRequires: ant
+BuildRequires: ecj >= 1:4.2.1
+BuildRequires: findutils
+BuildRequires: apache-commons-collections
+BuildRequires: apache-commons-daemon
+BuildRequires: apache-commons-dbcp
+BuildRequires: apache-commons-pool
+BuildRequires: jakarta-taglibs-standard
+BuildRequires: java-devel >= 1:1.6.0
+BuildRequires: jpackage-utils >= 0:1.7.0
+BuildRequires: junit
+BuildRequires: log4j
+BuildRequires: geronimo-jaxrpc
+BuildRequires: wsdl4j
+BuildRequires: systemd-units
+Requires:      apache-commons-daemon
+Requires:      apache-commons-logging
+Requires:      apache-commons-collections
+Requires:      apache-commons-dbcp
+Requires:      apache-commons-pool
+Requires:      java >= 1:1.6.0
+Requires:      jpackage-utils
+Requires:      procps
+Requires:      %{name}-lib = %{epoch}:%{version}-%{release}
+Requires(pre):    shadow-utils
+Requires(post):   chkconfig
+Requires(preun):  chkconfig
+Requires(post):   systemd-units
+Requires(preun):  systemd-units
+Requires(postun): systemd-units
 
 %description
-tomcat bootstrap version.
+Tomcat is the servlet container that is used in the official Reference
+Implementation for the Java Servlet and JavaServer Pages technologies.
+The Java Servlet and JavaServer Pages specifications are developed by
+Sun under the Java Community Process.
 
-%files
-/etc/logrotate.d/tomcat
-/etc/sysconfig/tomcat
-/etc/tomcat
-/etc/tomcat/Catalina
-/etc/tomcat/Catalina/localhost
-/etc/tomcat/catalina.policy
-/etc/tomcat/catalina.properties
-/etc/tomcat/context.xml
-/etc/tomcat/log4j.properties
-/etc/tomcat/logging.properties
-/etc/tomcat/server.xml
-/etc/tomcat/tomcat-users.xml
-/etc/tomcat/tomcat.conf
-/etc/tomcat/web.xml
-/lib/systemd/system/tomcat.service
-/lib/systemd/system/tomcat@.service
-/usr/bin/tomcat-digest
-/usr/bin/tomcat-tool-wrapper
-/usr/lib/tmpfiles.d/tomcat.conf
-/usr/lib64/tomcat
-/usr/lib64/tomcat/preamble
-/usr/lib64/tomcat/server
-/usr/sbin/tomcat
-/usr/share/doc/tomcat
-/usr/share/doc/tomcat/LICENSE
-/usr/share/doc/tomcat/NOTICE
-/usr/share/doc/tomcat/RELEASE-NOTES
-/usr/share/tomcat
-/usr/share/tomcat/bin/bootstrap.jar
-/usr/share/tomcat/bin/catalina-tasks.xml
-/usr/share/tomcat/conf
-/usr/share/tomcat/lib
-/usr/share/tomcat/logs
-/usr/share/tomcat/temp
-/usr/share/tomcat/webapps
-/usr/share/tomcat/work
-/var/cache/tomcat
-/var/cache/tomcat/temp
-/var/cache/tomcat/work
-/var/lib/tomcat
-/var/lib/tomcat/webapps
-/var/log/tomcat
-/var/log/tomcat/catalina.out
-/var/run/tomcat.pid
+Tomcat is developed in an open and participatory environment and
+released under the Apache Software License version 2.0. Tomcat is intended
+to be a collaboration of the best-of-breed developers from around the world.
 
-#------------------------------------------------------------------------
-%package	-n tomcat-admin-webapps
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-admin-webapps bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	tomcat = 0:7.0.47-1.1
-Provides:	tomcat-admin-webapps = 0:7.0.47-1.1:2014.0
+%package admin-webapps
 
-%description	-n tomcat-admin-webapps
-tomcat-admin-webapps bootstrap version.
+Summary: The host-manager and manager web applications for Apache Tomcat
+Requires: %{name} = %{epoch}:%{version}-%{release}
 
-%files		-n tomcat-admin-webapps
-/var/lib/tomcat/webapps/host-manager
-/var/lib/tomcat/webapps/host-manager/META-INF
-/var/lib/tomcat/webapps/host-manager/META-INF/context.xml
-/var/lib/tomcat/webapps/host-manager/WEB-INF
-/var/lib/tomcat/webapps/host-manager/WEB-INF/jsp
-/var/lib/tomcat/webapps/host-manager/WEB-INF/jsp/401.jsp
-/var/lib/tomcat/webapps/host-manager/WEB-INF/jsp/403.jsp
-/var/lib/tomcat/webapps/host-manager/WEB-INF/jsp/404.jsp
-/var/lib/tomcat/webapps/host-manager/WEB-INF/web.xml
-/var/lib/tomcat/webapps/host-manager/images
-/var/lib/tomcat/webapps/host-manager/images/add.gif
-/var/lib/tomcat/webapps/host-manager/images/asf-logo.gif
-/var/lib/tomcat/webapps/host-manager/images/code.gif
-/var/lib/tomcat/webapps/host-manager/images/design.gif
-/var/lib/tomcat/webapps/host-manager/images/docs.gif
-/var/lib/tomcat/webapps/host-manager/images/fix.gif
-/var/lib/tomcat/webapps/host-manager/images/tomcat.gif
-/var/lib/tomcat/webapps/host-manager/images/update.gif
-/var/lib/tomcat/webapps/host-manager/images/void.gif
-/var/lib/tomcat/webapps/host-manager/index.jsp
-/var/lib/tomcat/webapps/host-manager/manager.xml
-/var/lib/tomcat/webapps/manager
-/var/lib/tomcat/webapps/manager/META-INF
-/var/lib/tomcat/webapps/manager/META-INF/context.xml
-/var/lib/tomcat/webapps/manager/WEB-INF
-/var/lib/tomcat/webapps/manager/WEB-INF/jsp
-/var/lib/tomcat/webapps/manager/WEB-INF/jsp/401.jsp
-/var/lib/tomcat/webapps/manager/WEB-INF/jsp/403.jsp
-/var/lib/tomcat/webapps/manager/WEB-INF/jsp/404.jsp
-/var/lib/tomcat/webapps/manager/WEB-INF/jsp/sessionDetail.jsp
-/var/lib/tomcat/webapps/manager/WEB-INF/jsp/sessionsList.jsp
-/var/lib/tomcat/webapps/manager/WEB-INF/web.xml
-/var/lib/tomcat/webapps/manager/images
-/var/lib/tomcat/webapps/manager/images/add.gif
-/var/lib/tomcat/webapps/manager/images/asf-logo.gif
-/var/lib/tomcat/webapps/manager/images/code.gif
-/var/lib/tomcat/webapps/manager/images/design.gif
-/var/lib/tomcat/webapps/manager/images/docs.gif
-/var/lib/tomcat/webapps/manager/images/fix.gif
-/var/lib/tomcat/webapps/manager/images/tomcat.gif
-/var/lib/tomcat/webapps/manager/images/update.gif
-/var/lib/tomcat/webapps/manager/images/void.gif
-/var/lib/tomcat/webapps/manager/index.jsp
-/var/lib/tomcat/webapps/manager/status.xsd
-/var/lib/tomcat/webapps/manager/xform.xsl
+%description admin-webapps
+The host-manager and manager web applications for Apache Tomcat.
 
-#------------------------------------------------------------------------
-%package	-n tomcat-docs-webapp
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-docs-webapp bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	tomcat = 0:7.0.47-1.1
-Provides:	tomcat-docs-webapp = 0:7.0.47-1.1:2014.0
+%package docs-webapp
 
-%description	-n tomcat-docs-webapp
-tomcat-docs-webapp bootstrap version.
+Summary: The docs web application for Apache Tomcat
+Requires: %{name} = %{epoch}:%{version}-%{release}
 
-%files		-n tomcat-docs-webapp
-/var/lib/tomcat/webapps/docs
-/var/lib/tomcat/webapps/docs/BUILDING.txt
-/var/lib/tomcat/webapps/docs/RELEASE-NOTES.txt
-/var/lib/tomcat/webapps/docs/RUNNING.txt
-/var/lib/tomcat/webapps/docs/WEB-INF
-/var/lib/tomcat/webapps/docs/WEB-INF/web.xml
-/var/lib/tomcat/webapps/docs/aio.html
-/var/lib/tomcat/webapps/docs/api
-/var/lib/tomcat/webapps/docs/api/index.html
-/var/lib/tomcat/webapps/docs/appdev
-/var/lib/tomcat/webapps/docs/appdev/build.xml.txt
-/var/lib/tomcat/webapps/docs/appdev/deployment.html
-/var/lib/tomcat/webapps/docs/appdev/index.html
-/var/lib/tomcat/webapps/docs/appdev/installation.html
-/var/lib/tomcat/webapps/docs/appdev/introduction.html
-/var/lib/tomcat/webapps/docs/appdev/processes.html
-/var/lib/tomcat/webapps/docs/appdev/sample
-/var/lib/tomcat/webapps/docs/appdev/sample/build.xml
-/var/lib/tomcat/webapps/docs/appdev/sample/docs
-/var/lib/tomcat/webapps/docs/appdev/sample/docs/README.txt
-/var/lib/tomcat/webapps/docs/appdev/sample/index.html
-/var/lib/tomcat/webapps/docs/appdev/sample/src
-/var/lib/tomcat/webapps/docs/appdev/sample/src/mypackage
-/var/lib/tomcat/webapps/docs/appdev/sample/src/mypackage/Hello.java
-/var/lib/tomcat/webapps/docs/appdev/sample/web
-/var/lib/tomcat/webapps/docs/appdev/sample/web/WEB-INF
-/var/lib/tomcat/webapps/docs/appdev/sample/web/WEB-INF/web.xml
-/var/lib/tomcat/webapps/docs/appdev/sample/web/hello.jsp
-/var/lib/tomcat/webapps/docs/appdev/sample/web/images
-/var/lib/tomcat/webapps/docs/appdev/sample/web/images/tomcat.gif
-/var/lib/tomcat/webapps/docs/appdev/sample/web/index.html
-/var/lib/tomcat/webapps/docs/appdev/source.html
-/var/lib/tomcat/webapps/docs/appdev/web.xml.txt
-/var/lib/tomcat/webapps/docs/apr.html
-/var/lib/tomcat/webapps/docs/architecture
-/var/lib/tomcat/webapps/docs/architecture/index.html
-/var/lib/tomcat/webapps/docs/architecture/overview.html
-/var/lib/tomcat/webapps/docs/architecture/requestProcess
-/var/lib/tomcat/webapps/docs/architecture/requestProcess.html
-/var/lib/tomcat/webapps/docs/architecture/requestProcess/requestProcess.pdf
-/var/lib/tomcat/webapps/docs/architecture/requestProcess/roseModel.mdl
-/var/lib/tomcat/webapps/docs/architecture/startup
-/var/lib/tomcat/webapps/docs/architecture/startup.html
-/var/lib/tomcat/webapps/docs/architecture/startup/serverStartup.pdf
-/var/lib/tomcat/webapps/docs/architecture/startup/serverStartup.txt
-/var/lib/tomcat/webapps/docs/balancer-howto.html
-/var/lib/tomcat/webapps/docs/building.html
-/var/lib/tomcat/webapps/docs/cgi-howto.html
-/var/lib/tomcat/webapps/docs/changelog.html
-/var/lib/tomcat/webapps/docs/class-loader-howto.html
-/var/lib/tomcat/webapps/docs/cluster-howto.html
-/var/lib/tomcat/webapps/docs/comments.html
-/var/lib/tomcat/webapps/docs/config
-/var/lib/tomcat/webapps/docs/config/ajp.html
-/var/lib/tomcat/webapps/docs/config/cluster-channel.html
-/var/lib/tomcat/webapps/docs/config/cluster-deployer.html
-/var/lib/tomcat/webapps/docs/config/cluster-interceptor.html
-/var/lib/tomcat/webapps/docs/config/cluster-listener.html
-/var/lib/tomcat/webapps/docs/config/cluster-manager.html
-/var/lib/tomcat/webapps/docs/config/cluster-membership.html
-/var/lib/tomcat/webapps/docs/config/cluster-receiver.html
-/var/lib/tomcat/webapps/docs/config/cluster-sender.html
-/var/lib/tomcat/webapps/docs/config/cluster-valve.html
-/var/lib/tomcat/webapps/docs/config/cluster.html
-/var/lib/tomcat/webapps/docs/config/context.html
-/var/lib/tomcat/webapps/docs/config/engine.html
-/var/lib/tomcat/webapps/docs/config/executor.html
-/var/lib/tomcat/webapps/docs/config/filter.html
-/var/lib/tomcat/webapps/docs/config/globalresources.html
-/var/lib/tomcat/webapps/docs/config/host.html
-/var/lib/tomcat/webapps/docs/config/http.html
-/var/lib/tomcat/webapps/docs/config/index.html
-/var/lib/tomcat/webapps/docs/config/jar-scanner.html
-/var/lib/tomcat/webapps/docs/config/listeners.html
-/var/lib/tomcat/webapps/docs/config/loader.html
-/var/lib/tomcat/webapps/docs/config/manager.html
-/var/lib/tomcat/webapps/docs/config/realm.html
-/var/lib/tomcat/webapps/docs/config/resources.html
-/var/lib/tomcat/webapps/docs/config/server.html
-/var/lib/tomcat/webapps/docs/config/service.html
-/var/lib/tomcat/webapps/docs/config/systemprops.html
-/var/lib/tomcat/webapps/docs/config/valve.html
-/var/lib/tomcat/webapps/docs/connectors.html
-/var/lib/tomcat/webapps/docs/default-servlet.html
-/var/lib/tomcat/webapps/docs/deployer-howto.html
-/var/lib/tomcat/webapps/docs/developers.html
-/var/lib/tomcat/webapps/docs/elapi
-/var/lib/tomcat/webapps/docs/elapi/index.html
-/var/lib/tomcat/webapps/docs/extras.html
-/var/lib/tomcat/webapps/docs/funcspecs
-/var/lib/tomcat/webapps/docs/funcspecs/fs-admin-apps.html
-/var/lib/tomcat/webapps/docs/funcspecs/fs-admin-objects.html
-/var/lib/tomcat/webapps/docs/funcspecs/fs-admin-opers.html
-/var/lib/tomcat/webapps/docs/funcspecs/fs-default.html
-/var/lib/tomcat/webapps/docs/funcspecs/fs-jdbc-realm.html
-/var/lib/tomcat/webapps/docs/funcspecs/fs-jndi-realm.html
-/var/lib/tomcat/webapps/docs/funcspecs/fs-memory-realm.html
-/var/lib/tomcat/webapps/docs/funcspecs/index.html
-/var/lib/tomcat/webapps/docs/funcspecs/mbean-names.html
-/var/lib/tomcat/webapps/docs/html-manager-howto.html
-/var/lib/tomcat/webapps/docs/images
-/var/lib/tomcat/webapps/docs/images/add.gif
-/var/lib/tomcat/webapps/docs/images/asf-logo.gif
-/var/lib/tomcat/webapps/docs/images/code.gif
-/var/lib/tomcat/webapps/docs/images/cors-flowchart.png
-/var/lib/tomcat/webapps/docs/images/design.gif
-/var/lib/tomcat/webapps/docs/images/docs.gif
-/var/lib/tomcat/webapps/docs/images/fix.gif
-/var/lib/tomcat/webapps/docs/images/printer.gif
-/var/lib/tomcat/webapps/docs/images/tomcat.gif
-/var/lib/tomcat/webapps/docs/images/tomcat.svg
-/var/lib/tomcat/webapps/docs/images/update.gif
-/var/lib/tomcat/webapps/docs/images/void.gif
-/var/lib/tomcat/webapps/docs/index.html
-/var/lib/tomcat/webapps/docs/introduction.html
-/var/lib/tomcat/webapps/docs/jasper-howto.html
-/var/lib/tomcat/webapps/docs/jdbc-pool.html
-/var/lib/tomcat/webapps/docs/jndi-datasource-examples-howto.html
-/var/lib/tomcat/webapps/docs/jndi-resources-howto.html
-/var/lib/tomcat/webapps/docs/jspapi
-/var/lib/tomcat/webapps/docs/jspapi/index.html
-/var/lib/tomcat/webapps/docs/logging.html
-/var/lib/tomcat/webapps/docs/manager-howto.html
-/var/lib/tomcat/webapps/docs/maven-jars.html
-/var/lib/tomcat/webapps/docs/mbeans-descriptor-howto.html
-/var/lib/tomcat/webapps/docs/monitoring.html
-/var/lib/tomcat/webapps/docs/proxy-howto.html
-/var/lib/tomcat/webapps/docs/realm-howto.html
-/var/lib/tomcat/webapps/docs/security-howto.html
-/var/lib/tomcat/webapps/docs/security-manager-howto.html
-/var/lib/tomcat/webapps/docs/servletapi
-/var/lib/tomcat/webapps/docs/servletapi/index.html
-/var/lib/tomcat/webapps/docs/setup.html
-/var/lib/tomcat/webapps/docs/ssi-howto.html
-/var/lib/tomcat/webapps/docs/ssl-howto.html
-/var/lib/tomcat/webapps/docs/tribes
-/var/lib/tomcat/webapps/docs/tribes/developers.html
-/var/lib/tomcat/webapps/docs/tribes/faq.html
-/var/lib/tomcat/webapps/docs/tribes/interceptors.html
-/var/lib/tomcat/webapps/docs/tribes/introduction.html
-/var/lib/tomcat/webapps/docs/tribes/membership.html
-/var/lib/tomcat/webapps/docs/tribes/setup.html
-/var/lib/tomcat/webapps/docs/tribes/status.html
-/var/lib/tomcat/webapps/docs/tribes/transport.html
-/var/lib/tomcat/webapps/docs/virtual-hosting-howto.html
-/var/lib/tomcat/webapps/docs/web-socket-howto.html
-/var/lib/tomcat/webapps/docs/windows-auth-howto.html
-/var/lib/tomcat/webapps/docs/windows-service-howto.html
+%description docs-webapp
+The docs web application for Apache Tomcat.
 
-#------------------------------------------------------------------------
-%package	-n tomcat-el-2.2-api
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-el-2.2-api bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	chkconfig
-Requires:	jpackage-utils
-Provides:	el_1_0_api = 0:7.0.47-1.1
-Provides:	el_api = 2.2
-Provides:	mvn(javax.el:el-api) = 7.0.47
-Provides:	mvn(javax.el:javax.el-api) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-el-api) = 7.0.47
-Provides:	mvn(org.eclipse.jetty.orbit:javax.el) = 7.0.47
-Provides:	osgi(javax.el) = 2.2.0
-Provides:	tomcat-el-2.2-api = 0:7.0.47-1.1:2014.0
+%package javadoc
 
-%description	-n tomcat-el-2.2-api
-tomcat-el-2.2-api bootstrap version.
+Summary: Javadoc generated documentation for Apache Tomcat
+Requires: jpackage-utils
 
-%files		-n tomcat-el-2.2-api
-/usr/share/doc/tomcat-el-2.2-api
-/usr/share/doc/tomcat-el-2.2-api/LICENSE
-/usr/share/java/tomcat-el-2.2-api.jar
-/usr/share/java/tomcat-el-api.jar
-/usr/share/java/tomcat/tomcat-el-2.2-api.jar
-/usr/share/maven-fragments/tomcat-tomcat-el-api
-/usr/share/maven-poms/JPP-tomcat-el-api.pom
-/usr/share/java/elspec.jar
+%description javadoc
+Javadoc generated documentation for Apache Tomcat.
 
-#------------------------------------------------------------------------
-%package	-n tomcat-javadoc
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-javadoc bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	jpackage-utils
-Provides:	tomcat-javadoc = 0:7.0.47-1.1:2014.0
+%package jsvc
 
-%description	-n tomcat-javadoc
-tomcat-javadoc bootstrap version.
+Summary: Apache jsvc wrapper for Apache Tomcat as separate service
+Requires: %{name} = %{epoch}:%{version}-%{release}
+Requires: apache-commons-daemon-jsvc
 
-%files		-n tomcat-javadoc
-/usr/share/javadoc/tomcat
-/usr/share/javadoc/tomcat/allclasses-frame.html
-/usr/share/javadoc/tomcat/allclasses-noframe.html
-/usr/share/javadoc/tomcat/constant-values.html
-/usr/share/javadoc/tomcat/deprecated-list.html
-/usr/share/javadoc/tomcat/help-doc.html
-/usr/share/javadoc/tomcat/index-all.html
-/usr/share/javadoc/tomcat/index.html
-/usr/share/javadoc/tomcat/org
-/usr/share/javadoc/tomcat/org/apache
-/usr/share/javadoc/tomcat/org/apache/catalina
-/usr/share/javadoc/tomcat/org/apache/catalina/AccessLog.html
-/usr/share/javadoc/tomcat/org/apache/catalina/AsyncDispatcher.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Authenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/CatalinaFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Cluster.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Contained.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Container.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ContainerEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ContainerListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ContainerServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Context.html
-/usr/share/javadoc/tomcat/org/apache/catalina/DistributedManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Engine.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Executor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Globals.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Group.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Host.html
-/usr/share/javadoc/tomcat/org/apache/catalina/InstanceEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/InstanceListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Lifecycle.html
-/usr/share/javadoc/tomcat/org/apache/catalina/LifecycleEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/LifecycleException.html
-/usr/share/javadoc/tomcat/org/apache/catalina/LifecycleListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/LifecycleState.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Loader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Manager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Pipeline.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Realm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Role.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Server.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Service.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Session.html
-/usr/share/javadoc/tomcat/org/apache/catalina/SessionEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/SessionListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Store.html
-/usr/share/javadoc/tomcat/org/apache/catalina/User.html
-/usr/share/javadoc/tomcat/org/apache/catalina/UserDatabase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Valve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/Wrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/AbstractCatalinaCommandTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/AbstractCatalinaTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/BaseRedirectorHelperTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/DeployTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/FindLeaksTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/JKStatusUpdateTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/JMXGetTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/JMXQueryTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/JMXSetTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/ListTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/ReloadTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/ResourcesTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/ServerinfoTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/SessionsTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/StartTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/StopTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/UndeployTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/ValidatorTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/Arg.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorCondition.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorCreateTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorEqualsCondition.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorGetTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorInvokeTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorQueryTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorSetTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/JMXAccessorUnregisterTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/jmx/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ant/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/AuthenticatorBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/BasicAuthenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/DigestAuthenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/FormAuthenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/NonLoginAuthenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/SSLAuthenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/SavedRequest.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/SingleSignOn.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/SingleSignOnEntry.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/SpnegoAuthenticator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/authenticator/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/CometEvent.EventSubType.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/CometEvent.EventType.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/CometEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/CometFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/CometFilterChain.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/CometProcessor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/comet/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/ClientAbortException.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CometEventImpl.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/Connector.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CoyoteAdapter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CoyoteInputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CoyoteOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CoyotePrincipal.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CoyoteReader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/CoyoteWriter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/InputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/MapperListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/OutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/Request.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/RequestFacade.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/Response.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/ResponseFacade.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/connector/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core
-/usr/share/javadoc/tomcat/org/apache/catalina/core/AccessLogAdapter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationContext.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationContextFacade.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationFilterConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationFilterFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationFilterRegistration.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationJspConfigDescriptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationJspPropertyGroupDescriptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationPart.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationServletRegistration.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationSessionCookieConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ApplicationTaglibDescriptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/AprLifecycleListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/AsyncContextImpl.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/AsyncListenerWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ContainerBase.ContainerBackgroundProcessor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ContainerBase.PrivilegedAddChild.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ContainerBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/DefaultInstanceManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/JasperListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/JreMemoryLeakPreventionListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/NamingContextListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardContext.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardEngine.AccessLogListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardEngine.NoopAccessLog.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardEngine.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardHost.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardPipeline.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardServer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardService.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardThreadExecutor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/StandardWrapperFacade.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/ThreadLocalLeakPreventionListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/core/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ApplicationListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ApplicationParameter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextEjb.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextEnvironment.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextHandler.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextLocalEjb.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextResource.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextResourceEnvRef.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextResourceLink.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextService.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ContextTransaction.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ErrorPage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/FilterDef.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/FilterMap.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/Injectable.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/InjectionTarget.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/JspPropertyGroup.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/LoginConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/MessageDestination.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/MessageDestinationRef.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/MultipartDef.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/NamingResources.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ResourceBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/SecurityCollection.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/SecurityConstraint.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/SecurityRoleRef.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/ServletDef.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/SessionConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/WebXml.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/deploy/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/AddDefaultCharsetFilter.ResponseWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/AddDefaultCharsetFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/CorsFilter.CORSRequestType.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/CorsFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/CsrfPreventionFilter.CsrfResponseWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/CsrfPreventionFilter.LruCache.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/CsrfPreventionFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.Duration.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.DurationUnit.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.ExpiresConfiguration.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.StartingPoint.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.XHttpServletResponse.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.XPrintWriter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.XServletOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/ExpiresFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/FailedRequestFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/FilterBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/RemoteAddrFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/RemoteHostFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/RemoteIpFilter.XForwardedRequest.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/RemoteIpFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/RequestDumperFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/RequestFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/SetCharacterEncodingFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/WebdavFixFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/filters/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/CatalinaCluster.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterDeployer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterMessageBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterSession.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/ClusterValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator/ClusterSingleSignOn.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator/ClusterSingleSignOnListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator/SingleSignOnMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/authenticator/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/CollectedInfo.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/HeartbeatListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/MultiCastSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/Proxy.State.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/Proxy.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/Sender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/TcpSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/backend/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context/ReplicatedContext.MultiEnumeration.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context/ReplicatedContext.ReplApplContext.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context/ReplicatedContext.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/context/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/FarmWarDeployer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/FileChangeListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/FileMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/FileMessageFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/UndeployMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/WarWatcher.WarFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/WarWatcher.WarInfo.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/WarWatcher.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/deploy/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/jmx
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/jmx/ClusterJmxHelper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/jmx/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/jmx/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/jmx/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/BackupManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/ClusterManagerBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/ClusterSessionListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/DeltaManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/DeltaRequest.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/DeltaSession.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/JvmRouteBinderValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/JvmRouteSessionIDBinderListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/SerializablePrincipal.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/SessionIDMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/SessionMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/SessionMessageImpl.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/session/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/ReplicationValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/SendMessageData.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/SimpleTcpCluster.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/tcp/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/util
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/util/IDynamicProperty.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ha/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/JdbcLeakPrevention.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/ResourceEntry.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/StandardClassLoader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/StandardClassLoaderMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/VirtualWebappLoader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/WebappClassLoader.PrivilegedFindResourceByName.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/WebappClassLoader.PrivilegedGetClassLoader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/WebappClassLoader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/WebappLoader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/loader/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/DummyProxySession.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/HTMLManagerServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/JMXProxyServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/JspHelper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/ManagerServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/StatusManagerServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/StatusTransformer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host/HTMLHostManagerServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host/HostManagerServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/host/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util/BaseSessionComparator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util/ReverseComparator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util/SessionUtils.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/manager/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ClassNameMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ConnectorMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ContainerMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ContextEnvironmentMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ContextMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ContextResourceLinkMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ContextResourceMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/GlobalResourcesLifecycleListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/GroupMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/JmxRemoteLifecycleListener.RmiClientLocalhostSocketFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/JmxRemoteLifecycleListener.RmiServerBindSocketFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/JmxRemoteLifecycleListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/MBeanDumper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/MBeanFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/MBeanUtils.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/MemoryUserDatabaseMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/NamingResourcesMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/RoleMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/ServiceMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/UserMBean.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/mbeans/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/CombinedRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/DataSourceRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/GenericPrincipal.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/JAASCallbackHandler.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/JAASMemoryLoginModule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/JAASRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/JDBCRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/JNDIRealm.User.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/JNDIRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/LockOutRealm.LockRecord.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/LockOutRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/MemoryRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/MemoryRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/NullRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/RealmBase.AllRolesMode.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/RealmBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/UserDatabaseRealm.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/X509SubjectDnRetriever.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/X509UsernameRetriever.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/realm/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security
-/usr/share/javadoc/tomcat/org/apache/catalina/security/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/SecurityClassLoad.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/SecurityConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/SecurityListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/SecurityUtil.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/security/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/CGIServlet.CGIEnvironment.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/CGIServlet.CGIRunner.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/CGIServlet.HTTPHeaderInputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/CGIServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/DefaultServlet.Range.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/DefaultServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/WebdavServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/servlets/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session
-/usr/share/javadoc/tomcat/org/apache/catalina/session/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/FileStore.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/JDBCStore.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/ManagerBase.SessionTiming.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/ManagerBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/PersistentManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/PersistentManagerBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/StandardManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/StandardSession.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/StandardSessionFacade.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/StoreBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/TooManyActiveSessionsException.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/session/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/ByteArrayServletOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/ExpressionParseTree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/ExpressionTokenizer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/ResponseIncludeWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSICommand.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIConditional.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIEcho.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIExec.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIExternalResolver.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIFilter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIFlastmod.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIFsize.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIInclude.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIMediator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIPrintenv.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIProcessor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIServletExternalResolver.ServletContextAndPath.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIServletExternalResolver.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIServletRequestUtil.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSISet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/SSIStopProcessingException.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/ssi/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Bootstrap.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Catalina.CatalinaShutdownHook.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Catalina.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/CatalinaProperties.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ClassLoaderFactory.Repository.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ClassLoaderFactory.RepositoryType.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ClassLoaderFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ConnectorCreateRule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ContextConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ContextRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/CopyParentClassLoaderRule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/DigesterFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Embedded.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/EngineConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/EngineRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/ExpandWar.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/FailedContext.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/HomesUserDatabase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/HostConfig.DeployedApplication.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/HostConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/HostRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/LifecycleListenerRule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/NamingRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/PasswdUserDatabase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/RealmRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/SetAllPropertiesRule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/SetContextPropertiesRule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/SetNextNamingRule.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/TldConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/TldRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Tomcat.DefaultWebXmlListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Tomcat.ExistingStandardWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Tomcat.FixContextListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Tomcat.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/Tool.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/UserConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/UserDatabase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/WebAnnotationSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/WebRuleSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/XmlErrorHandler.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/startup/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ByteMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/Channel.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelException.FaultyMember.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelException.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelInterceptor.InterceptorEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelReceiver.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ChannelSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ErrorHandler.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/Heartbeat.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/ManagedChannel.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/Member.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/MembershipListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/MembershipService.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/MessageListener.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/RemoteProcessException.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/UniqueId.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/AbsoluteOrder.AbsoluteComparator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/AbsoluteOrder.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/ChannelCoordinator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/ChannelInterceptorBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/ExtendedRpcCallback.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/GroupChannel.HeartbeatThread.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/GroupChannel.InterceptorIterator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/GroupChannel.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/InterceptorPayload.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/Response.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/RpcCallback.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/RpcChannel.RpcCollector.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/RpcChannel.RpcCollectorKey.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/RpcChannel.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/RpcMessage.NoRpcChannelReply.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/RpcMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/DomainFilterInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/FragmentationInterceptor.FragCollection.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/FragmentationInterceptor.FragKey.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/FragmentationInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/GzipInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/MessageDispatch15Interceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/MessageDispatchInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/NonBlockingCoordinator.CoordinationEvent.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/NonBlockingCoordinator.CoordinationMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/NonBlockingCoordinator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/OrderInterceptor.Counter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/OrderInterceptor.MessageOrder.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/OrderInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/SimpleCoordinator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/StaticMembershipInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/TcpFailureDetector.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/TcpPingInterceptor.PingThread.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/TcpPingInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/ThroughputInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/TwoPhaseCommitInterceptor.MapEntry.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/TwoPhaseCommitInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/interceptors/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/group/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/BufferPool.BufferPoolAPI.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/BufferPool.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/ChannelData.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/DirectByteArrayOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/ListenCallback.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/ObjectReader.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/ReplicationStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/XByteBuffer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/io/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/McastService.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/McastServiceImpl.ReceiverThread.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/McastServiceImpl.RecoveryThread.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/McastServiceImpl.SenderThread.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/McastServiceImpl.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/MemberImpl.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/Membership.MbrEntry.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/Membership.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/StaticMember.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/membership/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/AbstractReplicatedMap.MapEntry.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/AbstractReplicatedMap.MapMessage.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/AbstractReplicatedMap.MapOwner.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/AbstractReplicatedMap.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/LazyReplicatedMap.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/ReplicatedMap.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/ReplicatedMapEntry.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/Streamable.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/tipis/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/AbstractRxTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/AbstractSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/DataSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/MultiPointSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/PooledSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/ReceiverBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/ReplicationTransmitter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/RxTaskPool.TaskCreator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/RxTaskPool.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/SenderState.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/BioReceiver.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/BioReplicationTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/BioSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/MultipointBioSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/PooledMultiSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util/FastQueue.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util/LinkObject.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util/SingleRemoveSynchronizedAddLock.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/bio/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/NioReceiver.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/NioReplicationTask.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/NioSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/ParallelNioSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/PooledParallelSender.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/nio/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/transport/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/Arrays.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/ExecutorFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/Logs.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/StringManager.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/TcclThreadFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/UUIDGenerator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/tribes/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users
-/usr/share/javadoc/tomcat/org/apache/catalina/users/AbstractGroup.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/AbstractRole.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/AbstractUser.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/MemoryGroup.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/MemoryRole.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/MemoryUser.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/MemoryUserDatabase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/MemoryUserDatabaseFactory.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/users/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util
-/usr/share/javadoc/tomcat/org/apache/catalina/util/Base64.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/CharsetMapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ConcurrentMessageDigest.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ContextName.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/Conversions.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/CustomObjectInputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/DOMWriter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/DateTool.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/Enumerator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/Extension.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ExtensionValidator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/IOTools.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/InstanceSupport.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/Introspection.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/LifecycleBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/LifecycleMBeanBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/LifecycleSupport.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/MD5Encoder.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/MIME2Java.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ManifestResource.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ParameterMap.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/RequestUtil.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ResourceSet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/SchemaResolver.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/ServerInfo.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/SessionConfig.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/SessionIdGenerator.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/Strftime.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/StringParser.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/TomcatCSS.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/URLEncoder.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/XMLWriter.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.AccessLogElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.ByteSentElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.CookieElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.DateAndTimeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.DateFormatCache.Cache.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.DateFormatCache.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.ElapsedTimeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.FirstByteTimeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.HeaderElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.HostElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.HttpStatusCodeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.LocalAddrElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.LocalPortElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.LocalServerNameElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.LogicalUserNameElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.MethodElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.ProtocolElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.QueryElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.RemoteAddrElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.RequestAttributeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.RequestElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.RequestURIElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.ResponseHeaderElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.SessionAttributeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.SessionIdElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.StringElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.ThreadNameElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.UserElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/AccessLogValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/CometConnectionManagerValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/Constants.AccessLog.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/CrawlerSessionManagerValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ErrorReportValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.CookieElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.DateElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.PatternTokenizer.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.RequestAttributeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.RequestHeaderElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.RequestParameterElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.ResponseAllHeaderElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.ResponseHeaderElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.ServletContextElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.SessionAttributeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.TimeElement.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ExtendedAccessLogValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/JDBCAccessLogValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/PersistentValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/RemoteAddrValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/RemoteHostValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/RemoteIpValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/RequestFilterValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/SSLValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/SemaphoreValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/StuckThreadDetectionValve.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/ValveBase.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/valves/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/Constants.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/MessageInbound.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/StreamInbound.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/WebSocketServlet.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/WsFrame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/WsHttpServletRequestWrapper.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/WsInputStream.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/WsOutbound.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/catalina/websocket/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/coyote
-/usr/share/javadoc/tomcat/org/apache/coyote/AbstractProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/AbstractProtocol.AbstractConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/AbstractProtocol.RecycledProcessors.html
-/usr/share/javadoc/tomcat/org/apache/coyote/AbstractProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ActionCode.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ActionHook.html
-/usr/share/javadoc/tomcat/org/apache/coyote/Adapter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/AsyncContextCallback.html
-/usr/share/javadoc/tomcat/org/apache/coyote/AsyncStateMachine.html
-/usr/share/javadoc/tomcat/org/apache/coyote/Constants.html
-/usr/share/javadoc/tomcat/org/apache/coyote/InputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/OutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/Processor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ProtocolHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/Request.html
-/usr/share/javadoc/tomcat/org/apache/coyote/RequestGroupInfo.html
-/usr/share/javadoc/tomcat/org/apache/coyote/RequestInfo.html
-/usr/share/javadoc/tomcat/org/apache/coyote/Response.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AbstractAjpProcessor.SocketInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AbstractAjpProcessor.SocketOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AbstractAjpProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AbstractAjpProtocol.AbstractAjpConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AbstractAjpProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpAprProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpAprProtocol.AjpConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpAprProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpMessage.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpNioProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpNioProtocol.AjpConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpNioProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpProtocol.AjpConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/AjpProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/Constants.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/coyote/ajp/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/AbstractHttp11JsseProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/AbstractHttp11Processor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/AbstractHttp11Protocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/AbstractInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/AbstractOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Constants.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/HeadersTooLargeException.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11AprProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11AprProtocol.Http11ConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11AprProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11NioProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11NioProtocol.Http11ConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11NioProtocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11Processor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11Protocol.Http11ConnectionHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/Http11Protocol.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalAprInputBuffer.SocketInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalAprInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalAprOutputBuffer.SocketOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalAprOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalInputBuffer.InputStreamInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalNioInputBuffer.HeaderParseData.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalNioInputBuffer.SocketInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalNioInputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalNioOutputBuffer.SocketOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalNioOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalOutputBuffer.OutputStreamOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/InternalOutputBuffer.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/OutputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/BufferedInputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/ChunkedInputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/ChunkedOutputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/FlushableGZIPOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/GzipOutputFilter.FakeOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/GzipOutputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/IdentityInputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/IdentityOutputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/SavedRequestInputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/VoidInputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/VoidOutputFilter.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/filters/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/AbstractProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/AbstractServletInputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/AbstractServletOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/AprProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/AprServletInputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/AprServletOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/BioProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/BioServletInputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/BioServletOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/Constants.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/NioProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/NioServletInputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/NioServletOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/UpgradeAprProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/UpgradeBioProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/UpgradeInbound.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/UpgradeNioProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/UpgradeOutbound.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/UpgradeProcessor.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/HttpUpgradeHandler.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/ReadListener.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/WebConnection.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/WriteListener.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/coyote/http11/upgrade/servlet31/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/coyote/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/coyote/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/coyote/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/el
-/usr/share/javadoc/tomcat/org/apache/el/ExpressionFactoryImpl.html
-/usr/share/javadoc/tomcat/org/apache/el/MethodExpressionImpl.html
-/usr/share/javadoc/tomcat/org/apache/el/MethodExpressionLiteral.html
-/usr/share/javadoc/tomcat/org/apache/el/ValueExpressionImpl.html
-/usr/share/javadoc/tomcat/org/apache/el/ValueExpressionLiteral.html
-/usr/share/javadoc/tomcat/org/apache/el/lang
-/usr/share/javadoc/tomcat/org/apache/el/lang/ELArithmetic.BigDecimalDelegate.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/ELArithmetic.BigIntegerDelegate.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/ELArithmetic.DoubleDelegate.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/ELArithmetic.LongDelegate.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/ELArithmetic.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/ELSupport.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/EvaluationContext.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/ExpressionBuilder.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/FunctionMapperFactory.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/FunctionMapperImpl.Function.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/FunctionMapperImpl.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/VariableMapperFactory.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/VariableMapperImpl.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/el/lang/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/el/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/el/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/el/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/el/parser
-/usr/share/javadoc/tomcat/org/apache/el/parser/ArithmeticNode.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstAnd.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstBracketSuffix.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstChoice.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstCompositeExpression.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstDeferredExpression.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstDiv.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstDotSuffix.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstDynamicExpression.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstEmpty.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstEqual.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstFalse.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstFloatingPoint.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstFunction.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstGreaterThan.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstGreaterThanEqual.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstIdentifier.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstInteger.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstLessThan.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstLessThanEqual.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstLiteralExpression.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstMethodParameters.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstMinus.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstMod.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstMult.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstNegative.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstNot.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstNotEqual.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstNull.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstOr.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstPlus.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstString.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstTrue.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstValue.Target.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/AstValue.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/BooleanNode.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/ELParser.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/ELParserConstants.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/ELParserTokenManager.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/ELParserTreeConstants.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/JJTELParserState.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/Node.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/NodeVisitor.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/ParseException.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/SimpleCharStream.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/SimpleNode.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/Token.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/TokenMgrError.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/el/parser/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/el/util
-/usr/share/javadoc/tomcat/org/apache/el/util/ConcurrentCache.html
-/usr/share/javadoc/tomcat/org/apache/el/util/MessageFactory.html
-/usr/share/javadoc/tomcat/org/apache/el/util/ReflectionUtil.html
-/usr/share/javadoc/tomcat/org/apache/el/util/Validation.html
-/usr/share/javadoc/tomcat/org/apache/el/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/el/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/el/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper
-/usr/share/javadoc/tomcat/org/apache/jasper/Constants.html
-/usr/share/javadoc/tomcat/org/apache/jasper/EmbeddedServletOptions.html
-/usr/share/javadoc/tomcat/org/apache/jasper/JasperException.html
-/usr/share/javadoc/tomcat/org/apache/jasper/JspC.html
-/usr/share/javadoc/tomcat/org/apache/jasper/JspCompilationContext.html
-/usr/share/javadoc/tomcat/org/apache/jasper/Options.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/AntCompiler.JasperAntLogger.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/AntCompiler.SystemLogHandler.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/AntCompiler.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/AttributeParser.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/BeanRepository.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/Compiler.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ELFunctionMapper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ELInterpreter.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ELInterpreterFactory.DefaultELInterpreter.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ELInterpreterFactory.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ELParser.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ErrorDispatcher.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ErrorHandler.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JDTCompiler.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JarResource.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JarScannerFactory.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JarURLResource.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JavacErrorDetail.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JspConfig.JspProperty.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JspConfig.JspPropertyGroup.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JspConfig.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JspRuntimeContext.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JspUtil.ValidAttribute.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/JspUtil.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/Localizer.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/ServletWriter.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/SmapGenerator.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/SmapStratum.LineInfo.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/SmapStratum.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/SmapUtil.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/TagConstants.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/TagPluginManager.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/TextOptimizer.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/TldLocation.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/TldLocationsCache.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/WebXml.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/tagplugin
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/tagplugin/TagPlugin.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/tagplugin/TagPluginContext.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/tagplugin/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/tagplugin/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/compiler/tagplugin/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el
-/usr/share/javadoc/tomcat/org/apache/jasper/el/ELContextImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/ELContextWrapper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/ELResolverImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/ExpressionEvaluatorImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/ExpressionImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/FunctionMapperImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JasperELResolver.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JspELException.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JspMethodExpression.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JspMethodNotFoundException.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JspPropertyNotFoundException.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JspPropertyNotWritableException.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/JspValueExpression.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/VariableResolverImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/el/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/BodyContentImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/HttpJspBase.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/InstanceManagerFactory.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspApplicationContextImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspContextWrapper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspFactoryImpl.PageContextPool.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspFactoryImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspFragmentHelper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspRuntimeLibrary.PrivilegedIntrospectHelper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspRuntimeLibrary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspSourceDependent.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/JspWriterImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/PageContextImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/PerThreadTagHandlerPool.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/ProtectedFunctionMapper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/ServletResponseWrapperInclude.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/TagHandlerPool.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/runtime/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/security
-/usr/share/javadoc/tomcat/org/apache/jasper/security/SecurityClassLoad.html
-/usr/share/javadoc/tomcat/org/apache/jasper/security/SecurityUtil.html
-/usr/share/javadoc/tomcat/org/apache/jasper/security/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/security/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/security/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/JasperLoader.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/JspCServletContext.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/JspServlet.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/JspServletWrapper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/servlet/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/Util.ImportResponseWrapper.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/Util.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Catch.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Choose.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/ForEach.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/ForTokens.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/If.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Import.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Otherwise.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Out.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Param.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Redirect.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Remove.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Set.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/Url.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/When.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/core/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/tagplugins/jstl/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util
-/usr/share/javadoc/tomcat/org/apache/jasper/util/Enumerator.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/ExceptionUtils.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/FastRemovalDequeue.Entry.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/FastRemovalDequeue.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/UniqueAttributesImpl.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/ASCIIReader.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/EncodingMap.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/ParserUtils.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/SymbolTable.Entry.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/SymbolTable.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/TreeNode.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/UCSReader.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/UTF8Reader.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/XMLChar.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/XMLEncodingDetector.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/XMLString.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/XMLStringBuffer.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/jasper/xmlparser/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/juli
-/usr/share/javadoc/tomcat/org/apache/juli/AsyncFileHandler.LogEntry.html
-/usr/share/javadoc/tomcat/org/apache/juli/AsyncFileHandler.LoggerThread.html
-/usr/share/javadoc/tomcat/org/apache/juli/AsyncFileHandler.html
-/usr/share/javadoc/tomcat/org/apache/juli/ClassLoaderLogManager.ClassLoaderLogInfo.html
-/usr/share/javadoc/tomcat/org/apache/juli/ClassLoaderLogManager.LogNode.html
-/usr/share/javadoc/tomcat/org/apache/juli/ClassLoaderLogManager.RootLogger.html
-/usr/share/javadoc/tomcat/org/apache/juli/ClassLoaderLogManager.html
-/usr/share/javadoc/tomcat/org/apache/juli/DateFormatCache.html
-/usr/share/javadoc/tomcat/org/apache/juli/FileHandler.html
-/usr/share/javadoc/tomcat/org/apache/juli/JdkLoggerFormatter.html
-/usr/share/javadoc/tomcat/org/apache/juli/OneLineFormatter.html
-/usr/share/javadoc/tomcat/org/apache/juli/VerbatimFormatter.html
-/usr/share/javadoc/tomcat/org/apache/juli/logging
-/usr/share/javadoc/tomcat/org/apache/juli/logging/Log.html
-/usr/share/javadoc/tomcat/org/apache/juli/logging/LogConfigurationException.html
-/usr/share/javadoc/tomcat/org/apache/juli/logging/LogFactory.html
-/usr/share/javadoc/tomcat/org/apache/juli/logging/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/juli/logging/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/juli/logging/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/juli/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/juli/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/juli/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/naming
-/usr/share/javadoc/tomcat/org/apache/naming/Constants.html
-/usr/share/javadoc/tomcat/org/apache/naming/ContextAccessController.html
-/usr/share/javadoc/tomcat/org/apache/naming/ContextBindings.html
-/usr/share/javadoc/tomcat/org/apache/naming/EjbRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/HandlerRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/JndiPermission.html
-/usr/share/javadoc/tomcat/org/apache/naming/NameParserImpl.html
-/usr/share/javadoc/tomcat/org/apache/naming/NamingContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/NamingContextBindingsEnumeration.html
-/usr/share/javadoc/tomcat/org/apache/naming/NamingContextEnumeration.html
-/usr/share/javadoc/tomcat/org/apache/naming/NamingEntry.html
-/usr/share/javadoc/tomcat/org/apache/naming/ResourceEnvRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/ResourceLinkRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/ResourceRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/SelectorContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/ServiceRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/StringManager.html
-/usr/share/javadoc/tomcat/org/apache/naming/TransactionRef.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory
-/usr/share/javadoc/tomcat/org/apache/naming/factory/BeanFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/Constants.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/DataSourceLinkFactory.DataSourceHandler.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/DataSourceLinkFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/EjbFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/MailSessionFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/OpenEjbFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/ResourceEnvFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/ResourceFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/ResourceLinkFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/SendMailFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/TransactionFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/webservices
-/usr/share/javadoc/tomcat/org/apache/naming/factory/webservices/ServiceProxy.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/webservices/ServiceRefFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/webservices/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/webservices/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/naming/factory/webservices/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/naming/java
-/usr/share/javadoc/tomcat/org/apache/naming/java/javaURLContextFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/java/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/naming/java/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/naming/java/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/naming/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/naming/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/naming/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources
-/usr/share/javadoc/tomcat/org/apache/naming/resources/BaseDirContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/CacheEntry.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/Constants.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/DirContextURLConnection.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/DirContextURLStreamHandler.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/DirContextURLStreamHandlerFactory.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/FileDirContext.FileResource.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/FileDirContext.FileResourceAttributes.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/FileDirContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/ImmutableNameNotFoundException.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/ProxyDirContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/RecyclableNamingEnumeration.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/Resource.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/ResourceAttributes.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/ResourceCache.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/VirtualDirContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/WARDirContext.Entry.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/WARDirContext.WARResource.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/WARDirContext.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/jndi
-/usr/share/javadoc/tomcat/org/apache/naming/resources/jndi/Handler.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/jndi/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/jndi/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/jndi/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/naming/resources/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat
-/usr/share/javadoc/tomcat/org/apache/tomcat/InstanceManager.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/JarScanner.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/JarScannerCallback.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/PeriodicEventListener.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/buildutil
-/usr/share/javadoc/tomcat/org/apache/tomcat/buildutil/CheckEol.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/buildutil/Txt2Html.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/buildutil/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/buildutil/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/buildutil/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/naming
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/naming/GenericNamingResourcesFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/naming/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/naming/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/naming/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/ConnectionPool.ConnectionFuture.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/ConnectionPool.PoolCleaner.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/ConnectionPool.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/DataSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/DataSourceFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/DataSourceProxy.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/DisposableConnectionFacade.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/FairBlockingQueue.ExchangeCountDownLatch.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/FairBlockingQueue.FairIterator.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/FairBlockingQueue.ItemFuture.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/FairBlockingQueue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/JdbcInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/MultiLockFairBlockingQueue.ExchangeCountDownLatch.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/MultiLockFairBlockingQueue.FairIterator.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/MultiLockFairBlockingQueue.ItemFuture.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/MultiLockFairBlockingQueue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PoolConfiguration.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PoolExhaustedException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PoolProperties.InterceptorDefinition.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PoolProperties.InterceptorProperty.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PoolProperties.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PoolUtilities.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/PooledConnection.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/ProxyConnection.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/TrapException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/Validator.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/XADataSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/AbstractCreateStatementInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/AbstractQueryReport.StatementProxy.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/AbstractQueryReport.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/ConnectionState.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/QueryTimeoutInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/ResetAbandonedTimer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/SlowQueryReport.QueryStats.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/SlowQueryReport.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/SlowQueryReportJmx.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/SlowQueryReportJmxMBean.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/StatementCache.CachedStatement.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/StatementCache.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/StatementDecoratorInterceptor.ResultSetProxy.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/StatementDecoratorInterceptor.StatementProxy.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/StatementDecoratorInterceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/StatementFinalizer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/interceptor/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/jmx
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/jmx/ConnectionPool.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/jmx/ConnectionPoolMBean.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/jmx/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/jmx/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/jmx/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jdbc/pool/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Address.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/BIOCallback.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Directory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Error.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/File.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/FileInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Global.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Library.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Local.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Lock.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Mmap.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Multicast.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/OS.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/PasswordCallback.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Poll.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Pool.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/PoolCallback.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Proc.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/ProcErrorCallback.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Procattr.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Registry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/SSL.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/SSLContext.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/SSLSocket.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Shm.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Sockaddr.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Socket.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Status.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Stdlib.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/Time.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/User.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/jni/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/DomUtil.NullResolver.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/DomUtil.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/ExceptionUtils.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/IntrospectionUtils.AttributeHolder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/IntrospectionUtils.PropertySource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/IntrospectionUtils.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/MutableInteger.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/AccessFlags.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/AnnotationDefault.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/AnnotationElementValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/AnnotationEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Annotations.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ArrayElementValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Attribute.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/AttributeReader.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ClassElementValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ClassFormatException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ClassParser.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Code.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/CodeException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Constant.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantCP.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantClass.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantDouble.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantFieldref.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantFloat.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantInteger.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantInterfaceMethodref.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantInvokeDynamic.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantLong.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantMethodHandle.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantMethodType.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantMethodref.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantNameAndType.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantPool.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantString.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantUtf8.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ConstantValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Deprecated.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ElementValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ElementValuePair.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/EnclosingMethod.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/EnumElementValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ExceptionTable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Field.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/FieldOrMethod.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/InnerClass.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/InnerClasses.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/JavaClass.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/LineNumber.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/LineNumberTable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/LocalVariable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/LocalVariableTable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/LocalVariableTypeTable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Method.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/PMGClass.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ParameterAnnotationEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/ParameterAnnotations.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/RuntimeInvisibleAnnotations.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/RuntimeInvisibleParameterAnnotations.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/RuntimeVisibleAnnotations.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/RuntimeVisibleParameterAnnotations.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Signature.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/SimpleElementValue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/SourceFile.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/StackMap.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/StackMapEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/StackMapTable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/StackMapTableEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/StackMapType.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Synthetic.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Unknown.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/Utility.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/classfile/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/util
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/util/BCELComparator.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/util/ByteSequence.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/bcel/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/Ascii.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/B2CConverter.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/ByteChunk.ByteInputChannel.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/ByteChunk.ByteOutputChannel.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/ByteChunk.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/C2BConverter.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/CharChunk.CharInputChannel.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/CharChunk.CharOutputChannel.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/CharChunk.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/HexUtils.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/MessageBytes.MessageBytesFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/MessageBytes.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/StringCache.ByteEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/StringCache.CharEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/StringCache.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/UDecoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/UEncoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/Utf8Decoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/Utf8Encoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/buf/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/BinaryDecoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/BinaryEncoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/Decoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/DecoderException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/Encoder.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/EncoderException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary/Base64.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary/BaseNCodec.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary/StringUtils.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/binary/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/codec/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/collections
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/collections/ConcurrentCache.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/collections/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/collections/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/collections/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/AbstractObjectCreationFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/ArrayStack.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/CallMethodRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/CallParamRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/Digester.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/FactoryCreateRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/GenericParser.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/NodeCreateRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/ObjectCreateRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/ObjectCreationFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/ObjectParamRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/ParserFeatureSetterFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/PathCallParamRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/Rule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/RuleSet.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/RuleSetBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/Rules.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/RulesBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/SetNextRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/SetPropertiesRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/SetPropertyRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/SetRootRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/SetTopRule.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/WithDefaultsRulesWrapper.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/XercesParser.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/digester/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/file
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/file/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/file/Matcher.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/file/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/file/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/file/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/ContentType.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/CookieSupport.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/Cookies.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/FastHttpDateFormat.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/HttpMessages.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/MimeHeaders.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/Parameters.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/RequestUtil.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/ServerCookie.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/ByteArrayOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/DeferredFileOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileCleaningTracker.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileDeleteStrategy.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItem.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItemFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItemHeaders.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItemHeadersSupport.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItemIterator.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItemStream.ItemSkippedException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileItemStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUpload.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.FileSizeLimitExceededException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.FileUploadIOException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.IOFileUploadException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.InvalidContentTypeException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.SizeException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.SizeLimitExceededException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUploadException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/FileUtils.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/IOUtils.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/InvalidFileNameException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/MultipartStream.IllegalBoundaryException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/MultipartStream.ItemInputStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/MultipartStream.MalformedStreamException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/MultipartStream.ProgressNotifier.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/MultipartStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/ParameterParser.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/ProgressListener.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/RequestContext.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/ThresholdingOutputStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/UploadContext.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/disk
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/disk/DiskFileItem.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/disk/DiskFileItemFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/disk/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/disk/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/disk/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/servlet
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/servlet/ServletFileUpload.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/servlet/ServletRequestContext.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/servlet/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/servlet/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/servlet/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/Closeable.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/FileItemHeadersImpl.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/LimitedInputStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/Streams.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/mime
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/mime/MimeUtility.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/mime/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/mime/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/mime/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/fileupload/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.Context.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.ContextList.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.ContextVersion.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.Host.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.MapElement.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.Wrapper.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/Mapper.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/MappingData.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/mapper/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser/HttpParser.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser/MediaType.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser/MediaTypeCache.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/http/parser/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log/SystemLogHandler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log/UserDataHelper.Mode.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log/UserDataHelper.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/log/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/AttributeInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/BaseAttributeFilter.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/BaseModelMBean.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/BaseNotificationBroadcaster.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/ConstructorInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/FeatureInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/FixedNotificationFilter.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/ManagedBean.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/NotificationInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/OperationInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/ParameterInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/Registry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/RegistryMBean.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/Util.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/MbeansDescriptorsDOMSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/MbeansDescriptorsDigesterSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/MbeansDescriptorsIntrospectionSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/MbeansDescriptorsSerSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/MbeansSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/MbeansSourceMBean.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/ModelerSource.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/modules/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/modeler/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AbstractEndpoint.Acceptor.AcceptorState.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AbstractEndpoint.Acceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AbstractEndpoint.BindState.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AbstractEndpoint.Handler.SocketState.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AbstractEndpoint.Handler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AbstractEndpoint.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.Acceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.AsyncTimeout.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.Handler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.Poller.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.Sendfile.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.SendfileData.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.SocketInfo.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.SocketList.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.SocketProcessor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.SocketTimeouts.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.SocketWithOptionsProcessor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/AprEndpoint.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/DefaultServerSocketFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/JIoEndpoint.Acceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/JIoEndpoint.AsyncTimeout.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/JIoEndpoint.Handler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/JIoEndpoint.SocketProcessor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/JIoEndpoint.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioBlockingSelector.BlockPoller.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioBlockingSelector.KeyReference.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioBlockingSelector.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioChannel.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.Acceptor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.Handler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.KeyAttachment.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.NioBufferHandler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.Poller.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.PollerEvent.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.SendfileData.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.SocketProcessor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioEndpoint.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/NioSelectorPool.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SSLImplementation.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SSLSessionManager.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SSLSupport.CipherData.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SSLSupport.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SSLUtil.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SecureNioChannel.ApplicationBufferHandler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SecureNioChannel.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/ServerSocketFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SocketProperties.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SocketStatus.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/SocketWrapper.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/URL.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/JSSEImplementation.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/JSSEKeyManager.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/JSSESocketFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/NioX509KeyManager.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/jsse/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/net/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/res
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/res/StringManager.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/res/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/res/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/res/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/FileUrlJar.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/Jar.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/JarFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/NonClosingJarInputStream.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/StandardJarScanner.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/UrlJar.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/scan/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/LimitLatch.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/ResizableExecutor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/TaskQueue.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/TaskThread.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/TaskThreadFactory.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/ThreadPoolExecutor.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/util/threads/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/AsyncChannelWrapper.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/AsyncChannelWrapperNonSecure.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/AsyncChannelWrapperSecure.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/BackgroundProcess.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/BackgroundProcessManager.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/DecoderEntry.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/MessageHandlerResult.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/MessageHandlerResultType.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/ReadBufferOverflowException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/SendHandlerToCompletionHandler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/Util.DecoderMatch.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/Util.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WrappedMessageHandler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsContainerProvider.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsFrameBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsFrameClient.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsHandshakeResponse.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsIOException.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsPongMessage.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsRemoteEndpointAsync.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsRemoteEndpointBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsRemoteEndpointBasic.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsRemoteEndpointImplBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsRemoteEndpointImplClient.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsSession.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/WsWebSocketContainer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoEndpointBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoEndpointClient.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoEndpointServer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerPartialBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerPartialBinary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerPartialText.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerWholeBase.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerWholeBinary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerWholePong.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMessageHandlerWholeText.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoMethodMapping.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/PojoPathParam.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/pojo/package-tree.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/Constants.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/DefaultServerEndpointConfigurator.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/UpgradeUtil.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/UriTemplate.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsContextListener.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsFilter.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsFrameServer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsHandshakeRequest.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsHttpUpgradeHandler.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsRemoteEndpointImplServer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsSci.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsServerContainer.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsSessionListener.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/WsWriteTimeout.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/package-frame.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/package-summary.html
-/usr/share/javadoc/tomcat/org/apache/tomcat/websocket/server/package-tree.html
-/usr/share/javadoc/tomcat/overview-frame.html
-/usr/share/javadoc/tomcat/overview-summary.html
-/usr/share/javadoc/tomcat/overview-tree.html
-/usr/share/javadoc/tomcat/package-list
-/usr/share/javadoc/tomcat/resources
-/usr/share/javadoc/tomcat/resources/background.gif
-/usr/share/javadoc/tomcat/resources/tab.gif
-/usr/share/javadoc/tomcat/resources/titlebar.gif
-/usr/share/javadoc/tomcat/resources/titlebar_end.gif
-/usr/share/javadoc/tomcat/serialized-form.html
-/usr/share/javadoc/tomcat/stylesheet.css
+%description jsvc
+Systemd service and wrapper scripts to start tomcat with jsvc,
+which allows tomcat to perform some privileged operations
+(e.g. bind to a port < 1024) and then switch identity to a non-privileged user.
 
-#------------------------------------------------------------------------
-%package	-n tomcat-jsp-2.2-api
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-jsp-2.2-api bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	chkconfig
-Requires:	jpackage-utils
-Requires:	tomcat-servlet-3.0-api = 0:7.0.47-1.1
-Provides:	jsp = 2.2
-Provides:	jsp22
-Provides:	mvn(javax.servlet.jsp:javax.servlet.jsp-api) = 7.0.47
-Provides:	mvn(javax.servlet:jsp-api) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-jsp-api) = 7.0.47
-Provides:	mvn(org.eclipse.jetty.orbit:javax.servlet.jsp) = 7.0.47
-Provides:	osgi(javax.servlet.jsp) = 2.2.0
-Provides:	tomcat-jsp-2.2-api = 0:7.0.47-1.1:2014.0
+%package jsp-%{jspspec}-api
 
-%description	-n tomcat-jsp-2.2-api
-tomcat-jsp-2.2-api bootstrap version.
+Summary: Apache Tomcat JSP API implementation classes
+Provides: jsp = %{jspspec}
+Provides: jsp22
+Requires: %{name}-servlet-%{servletspec}-api = %{epoch}:%{version}-%{release}
+Requires(post): chkconfig
+Requires(postun): chkconfig
 
-%files		-n tomcat-jsp-2.2-api
-/usr/share/java/tomcat-jsp-2.2-api.jar
-/usr/share/java/tomcat-jsp-api.jar
-/usr/share/maven-fragments/tomcat-tomcat-jsp-api
-/usr/share/maven-poms/JPP-tomcat-jsp-api.pom
-/usr/share/java/jsp.jar
+%description jsp-%{jspspec}-api
+Apache Tomcat JSP API implementation classes.
 
-#------------------------------------------------------------------------
-%package	-n tomcat-jsvc
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-jsvc bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	apache-commons-daemon-jsvc
-Requires:	tomcat = 0:7.0.47-1.1
-Provides:	tomcat-jsvc = 0:7.0.47-1.1:2014.0
 
-%description	-n tomcat-jsvc
-tomcat-jsvc bootstrap version.
+%package lib
 
-%files		-n tomcat-jsvc
-/lib/systemd/system/tomcat-jsvc.service
-/usr/sbin/tomcat-jsvc
-/usr/sbin/tomcat-jsvc-sysd
+Summary: Libraries needed to run the Tomcat Web container
+Requires: %{name}-jsp-%{jspspec}-api = %{epoch}:%{version}-%{release}
+Requires: %{name}-servlet-%{servletspec}-api = %{epoch}:%{version}-%{release}
+Requires: %{name}-el-%{elspec}-api = %{epoch}:%{version}-%{release}
+Requires: ecj >= 1:4.2.1
+Requires: apache-commons-collections
+Requires: apache-commons-dbcp
+Requires: apache-commons-pool
+Requires(preun): coreutils
 
-#------------------------------------------------------------------------
-%package	-n tomcat-lib
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-lib bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	apache-commons-collections
-Requires:	apache-commons-dbcp
-Requires:	apache-commons-pool
-Requires:	coreutils
-Requires:	ecj >= 1:4.2.1
-Requires:	jpackage-utils
-Requires:	tomcat-el-2.2-api = 0:7.0.47-1.1
-Requires:	tomcat-jsp-2.2-api = 0:7.0.47-1.1
-Requires:	tomcat-servlet-3.0-api = 0:7.0.47-1.1
-Provides:	mvn(org.apache.tomcat:tomcat-annotations-api) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-api) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-catalina) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-catalina-ha) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-coyote) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-jasper) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-jasper-el) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-juli) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-tribes) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-util) = 7.0.47
-Provides:	osgi(org.apache.el) = 7.0.21
-Provides:	osgi(org.apache.jasper) = 7.0.21
-Provides:	osgi(org.apache.juli) = 7.0.21
-Provides:	osgi(org.apache.tomcat) = 7.0.21
-Provides:	osgi(org.apache.tomcat.jdbc) = 7.0.47
-Provides:	tomcat-lib = 0:7.0.47-1.1:2014.0
+%description lib
+Libraries needed to run the Tomcat Web container.
 
-%description	-n tomcat-lib
-tomcat-lib bootstrap version.
+%package servlet-%{servletspec}-api
 
-%files		-n tomcat-lib
-/usr/share/java/tomcat
-/usr/share/java/tomcat/annotations-api.jar
-/usr/share/java/tomcat/catalina-ant.jar
-/usr/share/java/tomcat/catalina-ha.jar
-/usr/share/java/tomcat/catalina-tribes.jar
-/usr/share/java/tomcat/catalina.jar
-/usr/share/java/tomcat/commons-collections.jar
-/usr/share/java/tomcat/commons-dbcp.jar
-/usr/share/java/tomcat/commons-pool.jar
-/usr/share/java/tomcat/jasper-el.jar
-/usr/share/java/tomcat/jasper-jdt.jar
-/usr/share/java/tomcat/jasper.jar
-/usr/share/java/tomcat/log4j.jar
-/usr/share/java/tomcat/tomcat-api.jar
-/usr/share/java/tomcat/tomcat-coyote.jar
-/usr/share/java/tomcat/tomcat-i18n-es.jar
-/usr/share/java/tomcat/tomcat-i18n-fr.jar
-/usr/share/java/tomcat/tomcat-i18n-ja.jar
-/usr/share/java/tomcat/tomcat-jdbc.jar
-/usr/share/java/tomcat/tomcat-jsp-2.2-api.jar
-/usr/share/java/tomcat/tomcat-juli.jar
-/usr/share/java/tomcat/tomcat-servlet-3.0-api.jar
-/usr/share/java/tomcat/tomcat-util.jar
-/usr/share/maven-fragments/tomcat
-/usr/share/maven-poms/JPP.tomcat-annotations-api.pom
-/usr/share/maven-poms/JPP.tomcat-catalina-ha.pom
-/usr/share/maven-poms/JPP.tomcat-catalina-tribes.pom
-/usr/share/maven-poms/JPP.tomcat-catalina.pom
-/usr/share/maven-poms/JPP.tomcat-jasper-el.pom
-/usr/share/maven-poms/JPP.tomcat-jasper.pom
-/usr/share/maven-poms/JPP.tomcat-tomcat-api.pom
-/usr/share/maven-poms/JPP.tomcat-tomcat-coyote.pom
-/usr/share/maven-poms/JPP.tomcat-tomcat-juli.pom
-/usr/share/maven-poms/JPP.tomcat-tomcat-util.pom
-/usr/share/tomcat/bin/tomcat-juli.jar
+Summary: Apache Tomcat Servlet API implementation classes
+Provides: servlet = %{servletspec}
+Provides: servlet6
+Provides: servlet3
+Requires(post): chkconfig
+Requires(postun): chkconfig
 
-#------------------------------------------------------------------------
-%package	-n tomcat-servlet-3.0-api
-Version:	7.0.47
-Release:	1.1
-Summary:	tomcat-servlet-3.0-api bootstrap version
-Requires:	javapackages-bootstrap
-Requires:	chkconfig
-Requires:	jpackage-utils
-Provides:	mvn(javax.servlet:javax.servlet-api) = 7.0.47
-Provides:	mvn(javax.servlet:servlet-api) = 7.0.47
-Provides:	mvn(org.apache.tomcat:tomcat-servlet-api) = 7.0.47
-Provides:	mvn(org.eclipse.jetty.orbit:javax.servlet) = 7.0.47
-Provides:	mvn(org.mortbay.jetty:servlet-api) = 7.0.47
-Provides:	osgi(javax.servlet) = 3.0.0
-Provides:	servlet = 3.0
-Provides:	servlet3
-Provides:	servlet6
-Provides:	tomcat-servlet-3.0-api = 0:7.0.47-1.1:2014.0
+%description servlet-%{servletspec}-api
+Apache Tomcat Servlet API implementation classes.
 
-%description	-n tomcat-servlet-3.0-api
-tomcat-servlet-3.0-api bootstrap version.
+%package el-%{elspec}-api
 
-%files		-n tomcat-servlet-3.0-api
-/usr/share/doc/tomcat-servlet-3.0-api
-/usr/share/doc/tomcat-servlet-3.0-api/LICENSE
-/usr/share/java/tomcat-servlet-3.0-api.jar
-/usr/share/java/tomcat-servlet-api.jar
-/usr/share/maven-fragments/tomcat-tomcat-servlet-api
-/usr/share/maven-poms/JPP-tomcat-servlet-api.pom
-/usr/share/java/servlet.jar
+Summary: Expression Language v1.0 API
+Provides: el_1_0_api = %{epoch}:%{version}-%{release}
+Provides: el_api = %{elspec}
+Requires(post): chkconfig
+Requires(postun): chkconfig
 
-#------------------------------------------------------------------------
+%description el-%{elspec}-api
+Expression Language 1.0.
+
+%package webapps
+
+Summary: The ROOT and examples web applications for Apache Tomcat
+Requires: %{name} = %{epoch}:%{version}-%{release}
+Requires: jakarta-taglibs-standard >= 0:1.1
+
+%description webapps
+The ROOT and examples web applications for Apache Tomcat.
+
 %prep
+%setup -q -n %{packdname}
+# remove pre-built binaries and windows files
+find . -type f \( -name "*.bat" -o -name "*.class" -o -name Thumbs.db -o -name "*.gz" -o \
+   -name "*.jar" -o -name "*.war" -o -name "*.zip" \) -delete
+
+%patch0 -p0
+%patch1 -p0
+%{__ln_s} $(build-classpath jakarta-taglibs-core) webapps/examples/WEB-INF/lib/jstl.jar
+%{__ln_s} $(build-classpath jakarta-taglibs-standard) webapps/examples/WEB-INF/lib/standard.jar
 
 %build
+export OPT_JAR_LIST="xalan-j2-serializer"
+   # we don't care about the tarballs and we're going to replace
+   # tomcat-dbcp.jar with apache-commons-{collections,dbcp,pool}-tomcat5.jar
+   # so just create a dummy file for later removal
+   touch HACK
+   %{__mkdir_p} HACKDIR
+   touch HACKDIR/build.xml
+   # who needs a build.properties file anyway
+   %{ant} -Dbase.path="." \
+      -Dbuild.compiler="modern" \
+      -Dcommons-collections.jar="$(build-classpath apache-commons-collections)" \
+      -Dcommons-daemon.jar="$(build-classpath apache-commons-daemon)" \
+      -Dcommons-daemon.native.src.tgz="HACK" \
+      -Djasper-jdt.jar="$(build-classpath ecj)" \
+      -Djdt.jar="$(build-classpath ecj)" \
+      -Dtomcat-dbcp.jar="$(build-classpath apache-commons-dbcp)" \
+      -Dtomcat-native.tar.gz="HACK" \
+      -Dtomcat-native.home="." \
+      -Dcommons-daemon.native.win.mgr.exe="HACK" \
+      -Dnsis.exe="HACK" \
+      -Djaxrpc-lib.jar="$(build-classpath jaxrpc)" \
+      -Dwsdl4j-lib.jar="$(build-classpath wsdl4j)" \
+      -Dcommons-pool.home="HACKDIR" \
+      -Dcommons-dbcp.home="HACKDIR" \
+      -Dno.build.dbcp=true \
+      -Dversion="%{version}" \
+      -Dversion.build="%{micro_version}" \
+      deploy dist-prepare dist-source javadoc
+
+    # remove some jars that we'll replace with symlinks later
+   %{__rm} output/build/bin/commons-daemon.jar \
+           output/build/lib/ecj.jar \
+           output/build/lib/apache-commons-dbcp.jar
+
+    # remove the cruft we created
+   %{__rm} output/build/bin/tomcat-native.tar.gz
+pushd output/dist/src/webapps/docs/appdev/sample/src
+%{__mkdir_p} ../web/WEB-INF/classes
+%{javac} -cp ../../../../../../../../output/build/lib/servlet-api.jar -d ../web/WEB-INF/classes mypackage/Hello.java
+pushd ../web
+%{jar} cf ../../../../../../../../output/build/webapps/docs/appdev/sample/sample.war *
+popd
+popd
+
+# inject OSGi manifests
+mkdir -p META-INF
+cp -p %{SOURCE8} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/lib/servlet-api.jar META-INF/MANIFEST.MF
+cp -p %{SOURCE9} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/lib/jsp-api.jar META-INF/MANIFEST.MF
+cp -p %{SOURCE12} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/lib/el-api.jar META-INF/MANIFEST.MF
+cp -p %{SOURCE13} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/lib/jasper-el.jar META-INF/MANIFEST.MF
+cp -p %{SOURCE14} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/lib/jasper.jar META-INF/MANIFEST.MF
+cp -p %{SOURCE15} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/lib/tomcat-api.jar META-INF/MANIFEST.MF
+cp -p %{SOURCE16} META-INF/MANIFEST.MF
+touch META-INF/MANIFEST.MF
+zip -u output/build/bin/tomcat-juli.jar META-INF/MANIFEST.MF
 
 %install
-cd %{buildroot}
-rpm2cpio %{SOURCE0} | cpio -id
-rpm2cpio %{SOURCE1} | cpio -id
-rpm2cpio %{SOURCE2} | cpio -id
-rpm2cpio %{SOURCE3} | cpio -id
-rpm2cpio %{SOURCE4} | cpio -id
-rpm2cpio %{SOURCE5} | cpio -id
-rpm2cpio %{SOURCE6} | cpio -id
-rpm2cpio %{SOURCE7} | cpio -id
-rpm2cpio %{SOURCE8} | cpio -id
-pushd %{buildroot}%{_javadir}
-    ln -sf tomcat-el-2.2-api.jar elspec.jar
-    ln -sf tomcat-jsp-2.2-api.jar jsp.jar
-    ln -sf tomcat-servlet-3.0-api.jar servlet.jar
+# build initial path structure
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_bindir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_sbindir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_javadocdir}/%{name}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_initrddir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_systemddir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_sysconfdir}/logrotate.d
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_sysconfdir}/sysconfig
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{appdir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{bindir}
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{confdir}
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{confdir}/Catalina/localhost
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{libdir}
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{logdir}
+/bin/touch ${RPM_BUILD_ROOT}%{logdir}/catalina.out
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{_localstatedir}/run
+/bin/touch ${RPM_BUILD_ROOT}%{_localstatedir}/run/%{name}.pid
+/bin/echo "%{name}-%{major_version}.%{minor_version}.%{micro_version} RPM installed" >> ${RPM_BUILD_ROOT}%{logdir}/catalina.out
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{homedir}
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{tempdir}
+%{__install} -d -m 0775 ${RPM_BUILD_ROOT}%{workdir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_unitdir}
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}
+
+# move things into place
+# First copy supporting libs to tomcat lib
+pushd output/build
+    %{__cp} -a bin/*.{jar,xml} ${RPM_BUILD_ROOT}%{bindir}
+    %{__cp} %{SOURCE10} conf/log4j.properties
+    %{__cp} -a conf/*.{policy,properties,xml} ${RPM_BUILD_ROOT}%{confdir}
+    %{__cp} -a lib/*.jar ${RPM_BUILD_ROOT}%{libdir}
+    %{__cp} -a webapps/* ${RPM_BUILD_ROOT}%{appdir}
 popd
+# javadoc
+%{__cp} -a output/dist/webapps/docs/api/* ${RPM_BUILD_ROOT}%{_javadocdir}/%{name}
+
+%{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
+   -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
+   -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE1} \
+    > ${RPM_BUILD_ROOT}%{confdir}/%{name}.conf
+%{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
+   -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
+   -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE3} \
+    > ${RPM_BUILD_ROOT}%{_sysconfdir}/sysconfig/%{name}
+%{__install} -m 0644 %{SOURCE4} \
+    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}
+%{__install} -m 0644 %{SOURCE11} \
+    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}.service
+%{__install} -m 0644 %{SOURCE19} \
+    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}-jsvc
+%{__install} -m 0644 %{SOURCE20} \
+    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}-jsvc.service
+%{__install} -m 0644 %{SOURCE18} \
+    ${RPM_BUILD_ROOT}%{_sbindir}/%{name}-jsvc-sysd
+%{__sed} -e "s|\@\@\@TCLOG\@\@\@|%{logdir}|g" %{SOURCE5} \
+    > ${RPM_BUILD_ROOT}%{_sysconfdir}/logrotate.d/%{name}
+%{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
+   -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
+   -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE6} \
+    > ${RPM_BUILD_ROOT}%{_bindir}/%{name}-digest
+%{__sed} -e "s|\@\@\@TCHOME\@\@\@|%{homedir}|g" \
+   -e "s|\@\@\@TCTEMP\@\@\@|%{tempdir}|g" \
+   -e "s|\@\@\@LIBDIR\@\@\@|%{_libdir}|g" %{SOURCE7} \
+    > ${RPM_BUILD_ROOT}%{_bindir}/%{name}-tool-wrapper
+
+%{__install} -m 0755 %{SOURCE30} \
+    ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}/preamble
+%{__install} -m 0755 %{SOURCE31} \
+    ${RPM_BUILD_ROOT}%{_libexecdir}/%{name}/server
+%{__install} -m 0644 %{SOURCE32} \
+    ${RPM_BUILD_ROOT}%{_unitdir}/%{name}@.service
+
+# create jsp and servlet API symlinks
+pushd ${RPM_BUILD_ROOT}%{_javadir}
+   %{__mv} %{name}/jsp-api.jar %{name}-jsp-%{jspspec}-api.jar
+   %{__ln_s} %{name}-jsp-%{jspspec}-api.jar %{name}-jsp-api.jar
+   %{__mv} %{name}/servlet-api.jar %{name}-servlet-%{servletspec}-api.jar
+   %{__ln_s} %{name}-servlet-%{servletspec}-api.jar %{name}-servlet-api.jar
+   %{__mv} %{name}/el-api.jar %{name}-el-%{elspec}-api.jar
+   %{__ln_s} %{name}-el-%{elspec}-api.jar %{name}-el-api.jar
+popd
+
+pushd output/build
+    %{_bindir}/build-jar-repository lib apache-commons-collections \
+                                        apache-commons-dbcp apache-commons-pool ecj 2>&1
+    # need to use -p here with b-j-r otherwise the examples webapp fails to
+    # load with a java.io.IOException
+    %{_bindir}/build-jar-repository -p webapps/examples/WEB-INF/lib \
+    taglibs-core.jar taglibs-standard.jar 2>&1
+popd
+
+pushd ${RPM_BUILD_ROOT}%{libdir}
+    # symlink JSP and servlet API jars
+    %{__ln_s} ../%{name}-jsp-%{jspspec}-api.jar .
+    %{__ln_s} ../%{name}-servlet-%{servletspec}-api.jar .
+    %{__ln_s} ../%{name}-el-%{elspec}-api.jar .
+    %{__ln_s} $(build-classpath apache-commons-collections) commons-collections.jar
+    %{__ln_s} $(build-classpath apache-commons-dbcp) commons-dbcp.jar
+    %{__ln_s} $(build-classpath apache-commons-pool) commons-pool.jar
+    %{__ln_s} $(build-classpath log4j) log4j.jar
+    %{__ln_s} $(build-classpath ecj) jasper-jdt.jar
+
+    # Temporary copy the juli jar here from /usr/share/java/tomcat (for maven depmap)
+    %{__cp} -a ${RPM_BUILD_ROOT}%{bindir}/tomcat-juli.jar ./
+popd
+
+# symlink to the FHS locations where we've installed things
+pushd ${RPM_BUILD_ROOT}%{homedir}
+    %{__ln_s} %{appdir} webapps
+    %{__ln_s} %{confdir} conf
+    %{__ln_s} %{libdir} lib
+    %{__ln_s} %{logdir} logs
+    %{__ln_s} %{tempdir} temp
+    %{__ln_s} %{workdir} work
+popd
+
+# install sample webapp
+%{__mkdir_p} ${RPM_BUILD_ROOT}%{appdir}/sample
+pushd ${RPM_BUILD_ROOT}%{appdir}/sample
+%{jar} xf ${RPM_BUILD_ROOT}%{appdir}/docs/appdev/sample/sample.war
+popd
+%{__rm} ${RPM_BUILD_ROOT}%{appdir}/docs/appdev/sample/sample.war
+
+# Allow linking for example webapp
+%{__mkdir_p} ${RPM_BUILD_ROOT}%{appdir}/examples/META-INF
+pushd ${RPM_BUILD_ROOT}%{appdir}/examples/META-INF
+echo '<?xml version="1.0" encoding="UTF-8"?>'>context.xml
+echo '<Context allowLinking="true"/>'>>context.xml
+popd
+
+pushd ${RPM_BUILD_ROOT}%{appdir}/examples/WEB-INF/lib
+%{__ln_s} -f $(build-classpath jakarta-taglibs-core) jstl.jar
+%{__ln_s} -f $(build-classpath jakarta-taglibs-standard) standard.jar
+popd
+
+
+# Install the maven metadata
+%{__install} -d -m 0755 ${RPM_BUILD_ROOT}%{_mavenpomdir}
+pushd output/dist/src/res/maven
+for pom in *.pom; do
+    # fix-up version in all pom files
+    sed -i 's/@MAVEN.DEPLOY.VERSION@/%{version}/g' $pom
+done
+
+# we won't install dbcp, juli-adapters and juli-extras pom files
+for libname in annotations-api catalina jasper-el jasper catalina-ha; do
+    %{__cp} -a %{name}-$libname.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-$libname.pom
+    %add_maven_depmap JPP.%{name}-$libname.pom %{name}/$libname.jar
+done
+
+# servlet-api jsp-api and el-api are not in tomcat subdir, since they are widely re-used elsewhere
+%{__cp} -a tomcat-jsp-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-tomcat-jsp-api.pom
+%add_maven_depmap JPP-tomcat-jsp-api.pom tomcat-jsp-api.jar -f "tomcat-jsp-api" -a "javax.servlet.jsp:javax.servlet.jsp-api,javax.servlet:jsp-api,org.eclipse.jetty.orbit:javax.servlet.jsp"
+
+%{__cp} -a tomcat-el-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-tomcat-el-api.pom
+%add_maven_depmap JPP-tomcat-el-api.pom tomcat-el-api.jar -f "tomcat-el-api" -a "javax.el:javax.el-api,javax.el:el-api,org.eclipse.jetty.orbit:javax.el"
+
+%{__cp} -a tomcat-servlet-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-tomcat-servlet-api.pom
+# Generate a depmap fragment javax.servlet:servlet-api pointing to
+# tomcat-servlet-3.0-api for backwards compatibility
+# also provide jetty depmap (originally in jetty package, but it's cleaner to have it here
+%add_maven_depmap JPP-tomcat-servlet-api.pom tomcat-servlet-api.jar -f "tomcat-servlet-api" -a "javax.servlet:servlet-api,javax.servlet:javax.servlet-api,org.mortbay.jetty:servlet-api,org.eclipse.jetty.orbit:javax.servlet"
+
+# two special pom where jar files have different names
+%{__cp} -a tomcat-tribes.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
+%add_maven_depmap JPP.%{name}-catalina-tribes.pom %{name}/catalina-tribes.jar
+
+%{__cp} -a tomcat-coyote.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-coyote.pom
+%add_maven_depmap JPP.%{name}-tomcat-coyote.pom %{name}/tomcat-coyote.jar
+
+%{__cp} -a tomcat-juli.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
+%add_maven_depmap JPP.%{name}-tomcat-juli.pom %{name}/tomcat-juli.jar
+
+%{__cp} -a tomcat-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
+%add_maven_depmap JPP.%{name}-tomcat-api.pom %{name}/tomcat-api.jar
+
+%{__cp} -a tomcat-util.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
+%add_maven_depmap JPP.%{name}-tomcat-util.pom %{name}/tomcat-util.jar
+
+# replace temporary copy with link
+%{__ln_s} -f %{bindir}/tomcat-juli.jar ${RPM_BUILD_ROOT}%{libdir}/
+
+mkdir -p ${RPM_BUILD_ROOT}%{_prefix}/lib/tmpfiles.d
+cat > ${RPM_BUILD_ROOT}%{_prefix}/lib/tmpfiles.d/%{name}.conf <<EOF
+f %{_localstatedir}/run/%{name}.pid 0644 tomcat tomcat -
+EOF
+
+
+%pre
+# add the tomcat user and group
+%{_sbindir}/groupadd -g %{tcuid} -r tomcat 2>/dev/null || :
+%{_sbindir}/useradd -c "Apache Tomcat" -u %{tcuid} -g tomcat \
+    -s /bin/nologin -r -d %{homedir} tomcat 2>/dev/null || :
+
+%post
+# install but don't activate
+%systemd_post %{name}.service
+
+%post jsp-%{jspspec}-api
+%{_sbindir}/update-alternatives --install %{_javadir}/jsp.jar jsp \
+    %{_javadir}/%{name}-jsp-%{jspspec}-api.jar 20200
+
+%post servlet-%{servletspec}-api
+%{_sbindir}/update-alternatives --install %{_javadir}/servlet.jar servlet \
+    %{_javadir}/%{name}-servlet-%{servletspec}-api.jar 30000
+
+%post el-%{elspec}-api
+%{_sbindir}/update-alternatives --install %{_javadir}/elspec.jar elspec \
+   %{_javadir}/%{name}-el-%{elspec}-api.jar 20300
+
+%preun
+# clean tempdir and workdir on removal or upgrade
+%{__rm} -rf %{workdir}/* %{tempdir}/*
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun_with_restart %{name}.service 
+
+%postun jsp-%{jspspec}-api
+if [ "$1" = "0" ]; then
+    %{_sbindir}/update-alternatives --remove jsp \
+        %{_javadir}/%{name}-jsp-%{jspspec}-api.jar
+fi
+
+%postun servlet-%{servletspec}-api
+if [ "$1" = "0" ]; then
+    %{_sbindir}/update-alternatives --remove servlet \
+        %{_javadir}/%{name}-servlet-%{servletspec}-api.jar
+fi
+
+%postun el-%{elspec}-api
+if [ "$1" = "0" ]; then
+    %{_sbindir}/update-alternatives --remove elspec \
+        %{_javadir}/%{name}-el-%{elspec}-api.jar
+fi
+
+%triggerun -- tomcat < 0:7.0.22-2
+/usr/bin/systemd-sysv-convert -- save tomcat > /dev/null 2>&1 || :
+# Run these becasue the SysV package being removed won't do them
+/sbin/chkconfig --del tomcat > /dev/null 2>&1 || :
+/bin/systemctl try-restart tomcat.service > /dev/null 2>&1 || :
+
+%files
+%defattr(0664,root,tomcat,0755)
+%doc {LICENSE,NOTICE,RELEASE*}
+%attr(0755,root,root) %{_bindir}/%{name}-digest
+%attr(0755,root,root) %{_bindir}/%{name}-tool-wrapper
+%attr(0755,root,root) %{_sbindir}/%{name}
+%attr(0644,root,root) %{_unitdir}/%{name}.service
+%attr(0644,root,root) %{_unitdir}/%{name}@.service
+%attr(0755,root,root) %dir %{_libexecdir}/%{name}
+%attr(0755,root,root) %{_libexecdir}/%{name}/preamble
+%attr(0755,root,root) %{_libexecdir}/%{name}/server
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/%{name}
+%config(noreplace) %{_sysconfdir}/sysconfig/%{name}
+%attr(0755,root,tomcat) %dir %{basedir}
+%attr(0755,root,tomcat) %dir %{confdir}
+%defattr(0664,tomcat,root,0770)
+%attr(0770,tomcat,root) %dir %{logdir}
+%defattr(0664,root,tomcat,0770)
+%attr(0660,tomcat,tomcat) %{logdir}/catalina.out
+%attr(0644,tomcat,tomcat) %{_localstatedir}/run/%{name}.pid
+%attr(0770,root,tomcat) %dir %{cachedir}
+%attr(0770,root,tomcat) %dir %{tempdir}
+%attr(0770,root,tomcat) %dir %{workdir}
+%defattr(0664,root,tomcat,0775)
+%attr(0775,root,tomcat) %dir %{appdir}
+%attr(0775,root,tomcat) %dir %{confdir}/Catalina
+%attr(0775,root,tomcat) %dir %{confdir}/Catalina/localhost
+%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/%{name}.conf
+%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/*.policy
+%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/*.properties
+%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/context.xml
+%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/server.xml
+%attr(0660,tomcat,tomcat) %config(noreplace) %{confdir}/tomcat-users.xml
+%attr(0664,tomcat,tomcat) %config(noreplace) %{confdir}/web.xml
+%dir %{homedir}
+%{_prefix}/lib/tmpfiles.d/%{name}.conf
+%{bindir}/bootstrap.jar
+%{bindir}/catalina-tasks.xml
+%{homedir}/lib
+%{homedir}/temp
+%{homedir}/webapps
+%{homedir}/work
+%{homedir}/logs
+%{homedir}/conf
+
+%files admin-webapps
+%defattr(0664,root,tomcat,0755)
+%{appdir}/host-manager
+%{appdir}/manager
+
+%files docs-webapp
+%defattr(-,root,root,-)
+%{appdir}/docs
+
+%files javadoc
+%defattr(-,root,root,-)
+%{_javadocdir}/%{name}
+
+%files jsp-%{jspspec}-api
+%defattr(-,root,root,-)
+%{_javadir}/%{name}-jsp-%{jspspec}*.jar
+%{_javadir}/%{name}-jsp-api.jar
+%{_mavenpomdir}/JPP-%{name}-jsp-api.pom
+%{_mavendepmapfragdir}/%{name}-tomcat-jsp-api
+
+%files lib
+%defattr(-,root,root,-)
+%{libdir}
+%{bindir}/tomcat-juli.jar
+%{_mavendepmapfragdir}/%{name}
+%{_mavenpomdir}/JPP.%{name}-annotations-api.pom
+%{_mavenpomdir}/JPP.%{name}-catalina-ha.pom
+%{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
+%{_mavenpomdir}/JPP.%{name}-catalina.pom
+%{_mavenpomdir}/JPP.%{name}-jasper-el.pom
+%{_mavenpomdir}/JPP.%{name}-jasper.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-coyote.pom
+%{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
+
+%exclude %{libdir}/%{name}-el-%{elspec}-api.jar
+
+%files servlet-%{servletspec}-api
+%defattr(-,root,root,-)
+%doc LICENSE
+%{_javadir}/%{name}-servlet-%{servletspec}*.jar
+%{_javadir}/%{name}-servlet-api.jar
+%{_mavendepmapfragdir}/%{name}-tomcat-servlet-api
+%{_mavenpomdir}/JPP-%{name}-servlet-api.pom
+
+%files el-%{elspec}-api
+%defattr(-,root,root,-)
+%doc LICENSE
+%{_javadir}/%{name}-el-%{elspec}-api.jar
+%{_javadir}/%{name}-el-api.jar
+%{libdir}/%{name}-el-%{elspec}-api.jar
+%{_mavenpomdir}/JPP-%{name}-el-api.pom
+%{_mavendepmapfragdir}/%{name}-tomcat-el-api
+
+
+%files webapps
+%defattr(0644,tomcat,tomcat,0755)
+%{appdir}/ROOT
+%{appdir}/examples
+%{appdir}/sample
+
+%files jsvc
+%defattr(755,root,root,0755)
+%{_sbindir}/%{name}-jsvc
+%{_sbindir}/%{name}-jsvc-sysd
+%attr(0644,root,root) %{_unitdir}/%{name}-jsvc.service
+
+%changelog
+* Sun Nov 03 2013 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.47-1
+- Updated to 7.0.47
+- Fix java.security.policy
+
+* Sun Aug 04 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:7.0.42-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Fri Jul 12 2013 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.42-2
+- Remove jpackage-utils R
+
+* Thu Jul 11 2013 Dmitry Tikhonov <squall.sama@gmail.com> 0:7.0.42-1
+- Updated to 7.0.42
+
+* Tue Jun 11 2013 Paul Komkoff <i@stingr.net> 0:7.0.40-3
+- Dropped systemv inits. Bye-bye.
+- Updated the systemd wrappers to allow running multiple instances.
+  Added wrapper scripts to do that, ported the original non-named
+  service file to work with the same wrappers, updated
+  /usr/sbin/tomcat to call systemctl.
+
+* Sat May 11 2013 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.40-1
+- Updated to 7.0.40
+- Resolves: rhbz 956569 added missing commons-pool link
+- Remove ant-nodeps BR
+
+* Mon Mar  4 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 0:7.0.37-2
+- Add depmaps for org.eclipse.jetty.orbit
+- Resolves: rhbz#917626
+
+* Wed Feb 20 2013 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.39-1
+- Updated to 7.0.39
+
+* Wed Feb 20 2013 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.37-1
+- Updated to 7.0.37
+
+* Mon Feb 4 2013 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.35-1
+- Updated to 7.0.35
+- systemd SuccessExitStatus=143 for proper stop exit code processing
+
+* Mon Dec 24 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.34-1
+- Updated to 7.0.34
+- ecj >= 4.2.1 now required
+- Resolves: rhbz 889395 concat classpath correctly; chdir to $CATALINA_HOME
+
+* Fri Dec 7 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.33-2
+- Resolves: rhbz 883806 refix logdir ownership 
+
+* Sun Dec 2 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.33-1
+- Updated to 7.0.33
+- Resolves: rhbz 873620 need chkconfig for update-alternatives
+
+* Wed Oct 17 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.32-1
+- Updated to 7.0.32
+- Resolves: rhbz 842620 symlinks to taglibs
+
+* Fri Aug 24 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.29-1
+- Updated to 7.0.29
+- Add pidfile as tmpfile
+- Use systemd for running as unprivileged user
+- Resolves: rhbz 847751 upgrade path was broken
+- Resolves: rhbz 850343 use new systemd-rpm macros
+
+* Sat Jul 21 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0:7.0.28-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Mon Jul 2 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.28-1
+- Updated to 7.0.28
+- Resolves: rhbz 820119 Remove bundled apache-commons-dbcp
+- Resolves: rhbz 814900 Added tomcat-coyote POM
+- Resolves: rhbz 810775 Remove systemv stuff from %post scriptlet
+- Remove redhat-lsb R 
+
+* Mon Apr 9 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.27-2
+- Fixed native download hack
+
+* Sat Apr 7 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.27-1
+- Updated to 7.0.27
+- Fixed jakarta-taglibs-standard BR and R
+
+* Wed Mar 21 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 0:7.0.26-2
+- Add more depmaps to J2EE apis to help jetty/glassfish updates
+
+* Wed Mar 14 2012 Juan Hernandez <juan.hernandez@redhat.com> 0:7.0.26-2
+- Added the POM files for tomcat-api and tomcat-util (#803495)
+
+* Wed Feb 22 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.26-1
+- Updated to 7.0.26
+- Bug 790334: Change ownership of logdir for logrotate
+
+* Thu Feb 16 2012 Krzysztof Daniel <kdaniel@redhat.com> 0:7.0.25-4
+- Bug 790694: Priorities of jsp, servlet and el packages updated.
+
+* Wed Feb 8 2012 Krzysztof Daniel <kdaniel@redhat.com> 0:7.0.25-3
+- Dropped indirect dependecy to tomcat 5
+
+* Sun Jan 22 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.25-2
+- Added hack for maven depmap of tomcat-juli absolute link [ -f ] pass correctly
+
+* Sat Jan 21 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.25-1
+- Updated to 7.0.25
+- Removed EntityResolver patch (changes already in upstream sources)
+- Place poms and depmaps in the same package as jars
+- Added javax.servlet.descriptor to export-package of servlet-api
+- Move several chkconfig actions and reqs to systemv subpackage
+- New maven depmaps generation method
+- Add patch to support java7. (patch sent upstream).
+- Require java >= 1:1.6.0
+
+* Fri Jan 13 2012 Krzysztof Daniel <kdaniel@redhat.com> 0:7.0.23-5
+- Exported javax.servlet.* packages in version 3.0 as 2.6 to make
+  servlet-api compatible with Eclipse.
+
+* Thu Jan 12 2012 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.23-4
+- Move jsvc support to subpackage
+
+* Wed Jan 11 2012 Alexander Kurtakov <akurtako@redhat.com> 0:7.0.23-2
+- Add EntityResolver setter patch to jasper for jetty's need. (patch sent upstream).
+
+* Mon Dec 12 2011 Joseph D. Wagner <joe@josephdwagner.info> 0:7.0.23-3
+- Added support to /usr/sbin/tomcat-sysd and /usr/sbin/tomcat for
+  starting tomcat with jsvc, which allows tomcat to perform some
+  privileged operations (e.g. bind to a port < 1024) and then switch
+  identity to a non-privileged user. Must add USE_JSVC="true" to
+  /etc/tomcat/tomcat.conf or /etc/sysconfig/tomcat.
+
+* Mon Nov 28 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.23-1
+- Updated to 7.0.23
+
+* Fri Nov 11 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.22-2
+- Move tomcat-juli.jar to lib package
+- Drop %%update_maven_depmap as in tomcat6
+- Provide native systemd unit file ported from tomcat6
+
+* Thu Oct 6 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.22-1
+- Updated to 7.0.22
+
+* Mon Oct 03 2011 Rex Dieter <rdieter@fedoraproject.org> - 0:7.0.21-3.1
+- rebuild (java), rel-eng#4932
+
+* Mon Sep 26 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.21-3
+- Fix basedir mode
+
+* Tue Sep 20 2011 Roland Grunberg <rgrunber@redhat.com> 0:7.0.21-2
+- Add manifests for el-api, jasper-el, jasper, tomcat, and tomcat-juli.
+
+* Thu Sep 8 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.21-1
+- Updated to 7.0.21
+
+* Mon Aug 15 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.20-3
+- Require java = 1:1.6.0
+
+* Mon Aug 15 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.20-2
+- Require java < 1.7.0
+
+* Mon Aug 15 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.20-1
+- Updated to 7.0.20
+
+* Tue Jul 26 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.19-1
+- Updated to 7.0.19
+
+* Tue Jun 21 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.16-1
+- Updated to 7.0.16
+
+* Mon Jun 6 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.14-3
+- Added initial systemd service
+- Fix some paths
+
+* Sat May 21 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.14-2
+- Fixed http source link
+- Securify some permissions
+- Added licenses for el-api and servlet-api
+- Added dependency on jpackage-utils for the javadoc subpackage
+
+* Sat May 14 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.14-1
+- Updated to 7.0.14
+
+* Thu May 5 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.12-4
+- Provided local paths for libs
+- Fixed dependencies
+- Fixed update temp/work cleanup
+
+* Mon May 2 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.12-3
+- Fixed package groups
+- Fixed some permissions
+- Fixed some links
+- Removed old tomcat6 crap
+
+* Thu Apr 28 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.12-2
+- Package now named just tomcat instead of tomcat7
+- Removed Provides:  %{name}-log4j
+- Switched to apache-commons-* names instead of jakarta-commons-* .
+- Remove the old changelog
+- BR/R java >= 1:1.6.0 , same for java-devel
+- Removed old tomcat6 crap
+
+* Wed Apr 27 2011 Ivan Afonichev <ivan.afonichev@gmail.com> 0:7.0.12-1
+- Tomcat7
