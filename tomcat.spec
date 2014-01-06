@@ -106,6 +106,10 @@ BuildRequires: log4j
 BuildRequires: geronimo-jaxrpc
 BuildRequires: wsdl4j
 BuildRequires: systemd-units
+%if 0%{?fedora}
+%else
+BuildRequires: zip
+%endif
 Requires:      apache-commons-daemon
 Requires:      apache-commons-logging
 Requires:      apache-commons-collections
