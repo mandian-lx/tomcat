@@ -1,12 +1,2 @@
 sources:
   apache-tomcat-7.0.47-src.tar.gz: deeac2592c1d2c0f280126ed6186005a375ae46a
-  tomcat-7.0.47-1.1-omv2014.0.noarch.rpm: 06cc151f4ba9541e8b1159bdb5fcfa124ba3d497
-  tomcat-admin-webapps-7.0.47-1.1-omv2014.0.noarch.rpm: 70bc1c97f1a5ee7f858b15c9c2881138657b82d9
-  tomcat-docs-webapp-7.0.47-1.1-omv2014.0.noarch.rpm: afcbfbab37bb080b2c4fa1553b75483de55f001b
-  tomcat-el-2.2-api-7.0.47-1.1-omv2014.0.noarch.rpm: a519ded00117aec275cd433580eaae62698b39a0
-  tomcat-javadoc-7.0.47-1.1-omv2014.0.noarch.rpm: 136e7472687cfa4106d423bd0a2ed61a9fbcf10c
-  tomcat-jsp-2.2-api-7.0.47-1.1-omv2014.0.noarch.rpm: 918251f0bff665715128a6cf69f62b2bccf85524
-  tomcat-jsvc-7.0.47-1.1-omv2014.0.noarch.rpm: accf6c02e46335a946c3511d1136e0bbe9ccd9a6
-  tomcat-lib-7.0.47-1.1-omv2014.0.noarch.rpm: 69bed9f1edc1b8d8fcf9356073bad0713558b2bd
-  tomcat-servlet-3.0-api-7.0.47-1.1-omv2014.0.noarch.rpm: 23250429bdaf272c866f8a0414bda2b88989b124
-  tomcat-webapps-7.0.47-1.1-omv2014.0.noarch.rpm: 1ed843f1ac7089f21f06d7b6f3976f9ba4420df0
