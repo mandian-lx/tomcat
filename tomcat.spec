@@ -57,7 +57,7 @@
 Name:          tomcat
 Epoch:         0
 Version:       %{major_version}.%{minor_version}.%{micro_version}
-Release:       1.2%{?dist}
+Release:       1.3%{?dist}
 Summary:       Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
 
 
@@ -266,6 +266,7 @@ export OPT_JAR_LIST="xalan-j2-serializer"
       -Dtomcat-dbcp.jar="$(build-classpath apache-commons-dbcp)" \
       -Dtomcat-native.tar.gz="HACK" \
       -Dtomcat-native.home="." \
+      -Dtomcat-native.win.path="." \
       -Dcommons-daemon.native.win.mgr.exe="HACK" \
       -Dnsis.exe="HACK" \
       -Djaxrpc-lib.jar="$(build-classpath jaxrpc)" \
