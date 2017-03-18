@@ -34,7 +34,7 @@
 %global jspspec 2.2
 %global major_version 7
 %global minor_version 0
-%global micro_version 47
+%global micro_version 57
 %global packdname apache-tomcat-%{version}-src
 %global servletspec 3.0
 %global elspec 2.2
@@ -57,7 +57,7 @@
 Name:          tomcat
 Epoch:         0
 Version:       %{major_version}.%{minor_version}.%{micro_version}
-Release:       1.2%{?dist}
+Release:       1.4%{?dist}
 Summary:       Apache Servlet/JSP Engine, RI for Servlet %{servletspec}/JSP %{jspspec} API
 
 
@@ -89,6 +89,9 @@ Source32:      tomcat-named.service
 Patch0:        %{name}-%{major_version}.%{minor_version}-bootstrap-MANIFEST.MF.patch
 Patch1:        %{name}-%{major_version}.%{minor_version}-tomcat-users-webapp.patch
 
+#cb allows building with earlier ecj
+Patch100:	tomcat-7.0.56-ecj.patch
+
 BuildArch:     noarch
 
 BuildRequires: ant
@@ -99,7 +102,7 @@ BuildRequires: apache-commons-daemon
 BuildRequires: apache-commons-dbcp
 BuildRequires: apache-commons-pool
 BuildRequires: jakarta-taglibs-standard
-BuildRequires: java-devel >= 1:1.6.0
+BuildRequires: java-devel >= 1:1.8.0
 BuildRequires: jpackage-utils >= 0:1.7.0
 BuildRequires: junit
 BuildRequires: log4j
@@ -115,7 +118,7 @@ Requires:      apache-commons-logging
 Requires:      apache-commons-collections
 Requires:      apache-commons-dbcp
 Requires:      apache-commons-pool
-Requires:      java >= 1:1.6.0
+Requires:      java >= 1:1.8.0
 Requires:      jpackage-utils
 Requires:      procps
 Requires:      %{name}-lib = %{epoch}:%{version}-%{release}
@@ -239,6 +242,8 @@ find . -type f \( -name "*.bat" -o -name "*.class" -o -name Thumbs.db -o -name "
 
 %patch0 -p0
 %patch1 -p0
+%patch100 -p0
+
 %{__ln_s} $(build-classpath jakarta-taglibs-core) webapps/examples/WEB-INF/lib/jstl.jar
 %{__ln_s} $(build-classpath jakarta-taglibs-standard) webapps/examples/WEB-INF/lib/standard.jar
 
@@ -261,6 +266,7 @@ export OPT_JAR_LIST="xalan-j2-serializer"
       -Dtomcat-dbcp.jar="$(build-classpath apache-commons-dbcp)" \
       -Dtomcat-native.tar.gz="HACK" \
       -Dtomcat-native.home="." \
+      -Dtomcat-native.win.path="." \
       -Dcommons-daemon.native.win.mgr.exe="HACK" \
       -Dnsis.exe="HACK" \
       -Djaxrpc-lib.jar="$(build-classpath jaxrpc)" \
@@ -270,6 +276,7 @@ export OPT_JAR_LIST="xalan-j2-serializer"
       -Dno.build.dbcp=true \
       -Dversion="%{version}" \
       -Dversion.build="%{micro_version}" \
+      -Djava.7.home=%{java_home} \
       deploy dist-prepare dist-source javadoc
 
     # remove some jars that we'll replace with symlinks later
@@ -459,21 +466,24 @@ done
 # we won't install dbcp, juli-adapters and juli-extras pom files
 for libname in annotations-api catalina jasper-el jasper catalina-ha; do
     %{__cp} -a %{name}-$libname.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-$libname.pom
-    %add_maven_depmap JPP.%{name}-$libname.pom %{name}/$libname.jar
+    %add_maven_depmap JPP.%{name}-$libname.pom %{name}/$libname.jar -f "tomcat-lib"
 done
 
 # servlet-api jsp-api and el-api are not in tomcat subdir, since they are widely re-used elsewhere
 %{__cp} -a tomcat-jsp-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-tomcat-jsp-api.pom
-%add_maven_depmap JPP-tomcat-jsp-api.pom tomcat-jsp-api.jar -f "tomcat-jsp-api" -a "javax.servlet.jsp:javax.servlet.jsp-api,javax.servlet:jsp-api,org.eclipse.jetty.orbit:javax.servlet.jsp"
+%add_maven_depmap JPP-tomcat-jsp-api.pom tomcat-jsp-api.jar -f "tomcat-jsp-api" -a "org.eclipse.jetty.orbit:javax.servlet.jsp"
 
 %{__cp} -a tomcat-el-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-tomcat-el-api.pom
-%add_maven_depmap JPP-tomcat-el-api.pom tomcat-el-api.jar -f "tomcat-el-api" -a "javax.el:javax.el-api,javax.el:el-api,org.eclipse.jetty.orbit:javax.el"
+%add_maven_depmap JPP-tomcat-el-api.pom tomcat-el-api.jar -f "tomcat-el-api" -a "org.eclipse.jetty.orbit:javax.el"
 
 %{__cp} -a tomcat-servlet-api.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP-tomcat-servlet-api.pom
 # Generate a depmap fragment javax.servlet:servlet-api pointing to
 # tomcat-servlet-3.0-api for backwards compatibility
 # also provide jetty depmap (originally in jetty package, but it's cleaner to have it here
-%add_maven_depmap JPP-tomcat-servlet-api.pom tomcat-servlet-api.jar -f "tomcat-servlet-api" -a "javax.servlet:servlet-api,javax.servlet:javax.servlet-api,org.mortbay.jetty:servlet-api,org.eclipse.jetty.orbit:javax.servlet"
+%add_maven_depmap JPP-tomcat-servlet-api.pom tomcat-servlet-api.jar -f "tomcat-servlet-api" -a "org.mortbay.jetty:servlet-api,org.eclipse.jetty.orbit:javax.servlet"
+
+# replace temporary copy with link
+%{__ln_s} -f $(abs2rel %{bindir}/tomcat-juli.jar %{libdir}) ${RPM_BUILD_ROOT}%{libdir}/
 
 # two special pom where jar files have different names
 %{__cp} -a tomcat-tribes.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
@@ -491,8 +501,8 @@ done
 %{__cp} -a tomcat-util.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
 %add_maven_depmap JPP.%{name}-tomcat-util.pom %{name}/tomcat-util.jar
 
-# replace temporary copy with link
-%{__ln_s} -f %{bindir}/tomcat-juli.jar ${RPM_BUILD_ROOT}%{libdir}/
+%{__cp} -a tomcat-jdbc.pom ${RPM_BUILD_ROOT}%{_mavenpomdir}/JPP.%{name}-tomcat-jdbc.pom
+%add_maven_depmap JPP.%{name}-tomcat-jdbc.pom %{name}/tomcat-jdbc.jar
 
 mkdir -p ${RPM_BUILD_ROOT}%{_prefix}/lib/tmpfiles.d
 cat > ${RPM_BUILD_ROOT}%{_prefix}/lib/tmpfiles.d/%{name}.conf <<EOF
@@ -592,6 +602,7 @@ fi
 %{_prefix}/lib/tmpfiles.d/%{name}.conf
 %{bindir}/bootstrap.jar
 %{bindir}/catalina-tasks.xml
+%{homedir}/bin
 %{homedir}/lib
 %{homedir}/temp
 %{homedir}/webapps
@@ -612,18 +623,14 @@ fi
 %defattr(-,root,root,-)
 %{_javadocdir}/%{name}
 
-%files jsp-%{jspspec}-api
+%files jsp-%{jspspec}-api -f output/dist/src/res/maven/.mfiles-tomcat-jsp-api
 %defattr(-,root,root,-)
 %{_javadir}/%{name}-jsp-%{jspspec}*.jar
-%{_javadir}/%{name}-jsp-api.jar
-%{_mavenpomdir}/JPP-%{name}-jsp-api.pom
-%{_mavendepmapfragdir}/%{name}-tomcat-jsp-api
 
-%files lib
+%files lib -f output/dist/src/res/maven/.mfiles-tomcat-lib
 %defattr(-,root,root,-)
 %{libdir}
 %{bindir}/tomcat-juli.jar
-%{_mavendepmapfragdir}/%{name}
 %{_mavenpomdir}/JPP.%{name}-annotations-api.pom
 %{_mavenpomdir}/JPP.%{name}-catalina-ha.pom
 %{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
@@ -634,25 +641,20 @@ fi
 %{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-coyote.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
-
+%{_mavenpomdir}/JPP.%{name}-tomcat-jdbc.pom
+%{_datadir}/maven-metadata/tomcat.xml
 %exclude %{libdir}/%{name}-el-%{elspec}-api.jar
 
-%files servlet-%{servletspec}-api
+%files servlet-%{servletspec}-api -f output/dist/src/res/maven/.mfiles-tomcat-servlet-api
 %defattr(-,root,root,-)
 %doc LICENSE
 %{_javadir}/%{name}-servlet-%{servletspec}*.jar
-%{_javadir}/%{name}-servlet-api.jar
-%{_mavendepmapfragdir}/%{name}-tomcat-servlet-api
-%{_mavenpomdir}/JPP-%{name}-servlet-api.pom
 
-%files el-%{elspec}-api
+%files el-%{elspec}-api -f output/dist/src/res/maven/.mfiles-tomcat-el-api
 %defattr(-,root,root,-)
 %doc LICENSE
 %{_javadir}/%{name}-el-%{elspec}-api.jar
-%{_javadir}/%{name}-el-api.jar
 %{libdir}/%{name}-el-%{elspec}-api.jar
-%{_mavenpomdir}/JPP-%{name}-el-api.pom
-%{_mavendepmapfragdir}/%{name}-tomcat-el-api
 
 
 %files webapps
