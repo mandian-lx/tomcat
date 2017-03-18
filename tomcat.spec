@@ -631,18 +631,19 @@ fi
 %defattr(-,root,root,-)
 %{libdir}
 %{bindir}/tomcat-juli.jar
-%{_mavenpomdir}/JPP.%{name}-annotations-api.pom
-%{_mavenpomdir}/JPP.%{name}-catalina-ha.pom
+%{_mavendepmapfragdir}/%{name}
+#%{_mavenpomdir}/JPP.%{name}-annotations-api.pom
+#%{_mavenpomdir}/JPP.%{name}-catalina-ha.pom
 %{_mavenpomdir}/JPP.%{name}-catalina-tribes.pom
-%{_mavenpomdir}/JPP.%{name}-catalina.pom
-%{_mavenpomdir}/JPP.%{name}-jasper-el.pom
-%{_mavenpomdir}/JPP.%{name}-jasper.pom
+#%{_mavenpomdir}/JPP.%{name}-catalina.pom
+#%{_mavenpomdir}/JPP.%{name}-jasper-el.pom
+#%{_mavenpomdir}/JPP.%{name}-jasper.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-api.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-juli.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-coyote.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-util.pom
 %{_mavenpomdir}/JPP.%{name}-tomcat-jdbc.pom
-%{_datadir}/maven-metadata/tomcat.xml
+#%{_datadir}/maven-metadata/tomcat.xml
 %exclude %{libdir}/%{name}-el-%{elspec}-api.jar
 
 %files servlet-%{servletspec}-api -f output/dist/src/res/maven/.mfiles-tomcat-servlet-api
